@@ -17,6 +17,7 @@ const daysLeft = computed(() => {
 })
 
 const inExam = computed(() => route.path.startsWith('/exam/'))
+const isLogin = computed(() => route.path === '/login')
 // localStorage 非响应式：借路由变化触发重算（登录/退出必然改变路由）
 const isLoggedIn = computed(() => {
   void route.fullPath
@@ -44,7 +45,7 @@ function logout() {
     <n-message-provider>
       <n-dialog-provider>
         <div class="shell" :class="{ 'in-exam': inExam }">
-          <header v-if="!inExam" class="topbar">
+          <header v-if="!inExam && !isLogin" class="topbar">
             <div class="topbar-inner">
               <div class="brand">
                 <span class="logo">考</span>
@@ -73,7 +74,7 @@ function logout() {
         </div>
 
         <!-- 移动端底部 Tab 栏 -->
-        <nav v-if="!inExam" class="tabbar">
+        <nav v-if="!inExam && !isLogin" class="tabbar">
           <router-link to="/"><span class="tb-icon">🏠</span>首页</router-link>
           <router-link to="/review"><span class="tb-icon">🔁</span>复习</router-link>
           <router-link to="/vocab"><span class="tb-icon">📖</span>单词</router-link>

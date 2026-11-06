@@ -32,11 +32,23 @@ async function submit() {
 
 <template>
   <div class="login-wrap">
+    <div class="login-left">
+      <div class="slogan">
+        <div class="big-num">40<span>天</span></div>
+        <h1>过线，就够了</h1>
+        <p>199 管综 + 英语二 · 真题模考 · FSRS 记忆复习 · AI 讲解批改</p>
+      </div>
+      <div class="features">
+        <div class="feat"><b>📝</b><div>34 套真题整卷<br />限时模考自动判分</div></div>
+        <div class="feat"><b>🔁</b><div>FSRS 记忆引擎<br />答错自动进复习队列</div></div>
+        <div class="feat"><b>✨</b><div>AI 讲解与作文批改<br />按阅卷标准从紧给分</div></div>
+      </div>
+    </div>
+
     <div class="login-card">
       <div class="login-head">
         <div class="logo">考</div>
         <h2>考研助手</h2>
-        <p class="muted">199 管综 + 英语二 · 40 天冲刺</p>
       </div>
       <n-input v-model:value="username" placeholder="用户名" size="large" @keyup.enter="submit" />
       <n-input v-model:value="password" type="password" show-password-on="click"
@@ -58,15 +70,45 @@ async function submit() {
 </template>
 
 <style scoped>
-.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #eef2ff 0%, #f6f7fb 60%); }
-.login-card { width: min(360px, calc(100vw - 36px)); border-radius: 16px; box-shadow: 0 10px 40px rgba(30,41,80,.08);
-  background: #fff; padding: 28px; border: 1px solid #eef0f6; }
+.login-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 72px;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(106,92,255,.16), transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, rgba(47,111,237,.14), transparent 55%),
+    linear-gradient(160deg, #f8faff 0%, #eef1f9 100%);
+  padding: 24px;
+}
+.login-left { max-width: 460px; }
+.big-num { font-size: 88px; font-weight: 900; line-height: 1; color: #2f6fed;
+  letter-spacing: -2px; }
+.big-num span { font-size: 24px; margin-left: 6px; color: #7c849a; font-weight: 600; }
+.slogan h1 { margin: 10px 0 8px; font-size: 34px; letter-spacing: 1px; }
+.slogan p { margin: 0; color: #7c849a; font-size: 14.5px; }
+.features { display: flex; gap: 14px; margin-top: 34px; }
+.feat {
+  flex: 1; background: rgba(255,255,255,.75); backdrop-filter: blur(6px);
+  border: 1px solid rgba(47,111,237,.14); border-radius: 14px; padding: 14px;
+  font-size: 12.5px; color: #575e72; line-height: 1.65;
+}
+.feat b { font-size: 22px; display: block; margin-bottom: 6px; }
+.login-card { width: min(360px, calc(100vw - 36px)); border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(30,41,80,.12); background: #fff; padding: 30px 28px;
+  border: 1px solid #eef0f6; }
 .login-head { text-align: center; margin-bottom: 18px; }
-.logo { width: 44px; height: 44px; margin: 0 auto 8px; border-radius: 12px; background: #2f6fed;
-  color: #fff; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.logo { width: 48px; height: 48px; margin: 0 auto 8px; border-radius: 14px; background: #2f6fed;
+  color: #fff; font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 h2 { margin: 4px 0; }
 .error { color: #d03050; font-size: 13px; margin-top: 10px; text-align: center; }
 .switch-mode { text-align: center; margin-top: 14px; font-size: 13px; color: #8b93a7; }
 .switch-mode a { color: #2f6fed; cursor: pointer; }
+
+@media (max-width: 860px) {
+  .login-wrap { flex-direction: column; gap: 28px; padding: 40px 20px; justify-content: center; }
+  .login-left { max-width: 360px; text-align: center; }
+  .big-num { font-size: 56px; }
+  .slogan h1 { font-size: 24px; }
+  .features { flex-direction: column; gap: 8px; margin-top: 20px; }
+  .feat { display: flex; align-items: center; gap: 12px; text-align: left; padding: 10px 14px; }
+  .feat b { margin: 0; }
+}
 </style>
