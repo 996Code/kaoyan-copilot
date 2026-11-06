@@ -121,4 +121,7 @@ textarea.essay:focus { border-color: var(--blue); }
   textarea.essay { font-size: 14px; min-height: 180px; }
   .anscard .cell { width: 30px; height: 28px; }
   .kbd-hint { display: none; }
+  /* 触摸目标统一加高 */
+  .page .n-button { min-height: 34px; }
+  .page .n-button--tiny { min-height: 28px; }
 }

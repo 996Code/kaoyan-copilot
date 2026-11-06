@@ -19,6 +19,7 @@ const result = ref(null) // answer_question 返回
 const revealed = ref(false) // 单词卡翻面
 const ratingWord = ref(false)
 const stats = reactive({ done: 0, correctCount: 0 })
+const showAnalysis = ref(typeof window !== 'undefined' && window.innerWidth > 768)
 const cardFilter = ref('')  // ''=全部 / wrong_question / word / knowledge
 const forecast = ref([])
 
@@ -139,9 +140,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   <div class="page">
     <div class="rv-head">
       <h2 style="margin:18px 0 4px">复习中心</h2>
-      <p class="muted" style="margin:0">
-        到期卡片按 FSRS 记忆曲线调度；答对自动推迟下次复习，答错加快重现。
-      </p>
+      <p class="muted rv-sub" style="margin:0">到期卡片按 FSRS 记忆曲线调度；答对自动推迟，答错加快重现</p>
       <div class="filter-bar">
         <n-button size="small" :type="cardFilter === '' ? 'primary' : 'default'" @click="cardFilter = ''; load()">
           全部
@@ -221,8 +220,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           </span>
           <span class="muted" style="margin-left:12px;font-size:12px">下次复习：{{ (result.new_due || '').replace('T', ' ').slice(5, 16) }}</span>
           <div v-if="result.analysis">
-            <div class="section-title">解析</div>
-            <div class="rich" v-html="renderRich(result.analysis)"></div>
+            <div class="section-title toggle" @click="showAnalysis = !showAnalysis">
+              {{ showAnalysis ? '▾ 收起解析' : '▸ 显示解析' }}
+            </div>
+            <div v-show="showAnalysis" class="rich" v-html="renderRich(result.analysis)"></div>
           </div>
           <AiPanel v-if="!result.correct"
             :endpoint="`/api/ai/explain/${card.question.id}?student_answer=${encodeURIComponent(String(myAnswer ?? ''))}`" />
@@ -301,6 +302,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 <style scoped>
 .pstats { display:flex; gap:18px; font-size:13px; color:var(--t3); margin-bottom:10px; }
 .filter-bar { display:flex; gap:8px; margin:12px 0 4px; flex-wrap:wrap; }
+.toggle { cursor:pointer; user-select:none; }
+@media (max-width: 768px) {
+  .rv-sub { display:none; }
+  .rv-head h2 { margin-top: 12px; }
+  .review-card { padding: 12px; }
+  .fc { padding: 10px 12px; }
+  .fc-bars { height: 56px; }
+}
 .fc { display:flex; align-items:center; gap:14px; padding:12px 16px; margin:10px 0 14px; border-radius:var(--r-card); }
 .fc-title { font-size:13px; font-weight:600; color:var(--t2); writing-mode:vertical-lr; letter-spacing:2px; }
 .fc-bars { flex:1; display:flex; gap:8px; height:72px; }

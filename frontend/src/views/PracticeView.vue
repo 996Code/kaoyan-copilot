@@ -168,7 +168,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 <template>
   <div class="page">
     <h2 style="margin:18px 0 4px">专项练习</h2>
-    <p class="muted" style="margin:0 0 14px">按模块/年份抽题，即答即判，错题自动进错题记录（AI 讲解即将上线）</p>
+    <p class="muted pf-sub" style="margin:0 0 14px">按模块/年份抽题，即答即判，错题自动进错题记录</p>
 
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:16px">
       <div class="packs">
@@ -241,6 +241,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .packs { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .packs-label { font-size:12px; }
+@media (max-width: 768px) {
+  .pf-sub, .packs-label { display:none; }
+  .vb-head h2, h2 { margin-top: 12px; }
+  .practice-card { padding: 14px; }
+  .pstats { font-size: 12px; gap: 12px; }
+}
 .pstats { display: flex; gap: 18px; font-size: 13px; color: var(--t3); margin-bottom: 10px; }
 .practice-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
 .feedback { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-soft); }
