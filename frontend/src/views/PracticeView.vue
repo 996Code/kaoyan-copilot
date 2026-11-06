@@ -173,7 +173,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:16px">
       <div class="packs">
         <span class="packs-label muted">专项包：</span>
-        <n-button v-for="pk in PACKS" :key="pk.label" size="tiny"
+        <n-button v-for="pk in PACKS" :key="pk.label" size="small"
           :type="packActive(pk) ? 'primary' : 'default'" @click="applyPack(pk)">
           {{ pk.label }}
         </n-button>
