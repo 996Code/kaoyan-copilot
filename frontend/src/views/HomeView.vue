@@ -107,6 +107,13 @@ const sortedModules = computed(() =>
       </div>
     </div>
 
+    <!-- 数据区 Tab（置于面板上方，移动端显示） -->
+    <div class="data-tabs">
+      <n-button size="small" :type="dataTab === 'trend' ? 'primary' : 'default'" v-if="trends?.subjects.gz199.count" @click="dataTab = 'trend'">过线预测</n-button>
+      <n-button size="small" :type="dataTab === 'mods' ? 'primary' : 'default'" @click="dataTab = 'mods'">模块正确率</n-button>
+      <n-button size="small" :type="dataTab === 'week' ? 'primary' : 'default'" @click="dataTab = 'week'">近况</n-button>
+    </div>
+
     <!-- 模考趋势与过线预测 -->
     <div v-if="trends && (trends.subjects.gz199.count || trends.subjects.en2.count)" style="margin-bottom: 12px" v-show="showTab('trend')">
       <div class="panel">
@@ -147,12 +154,7 @@ const sortedModules = computed(() =>
       </div>
     </div>
 
-    <!-- 数据区（移动端 Tab 切换，一次一块） -->
-    <div class="data-tabs">
-      <n-button size="small" :type="dataTab === 'trend' ? 'primary' : 'default'" v-if="trends?.subjects.gz199.count" @click="dataTab = 'trend'">过线预测</n-button>
-      <n-button size="small" :type="dataTab === 'mods' ? 'primary' : 'default'" @click="dataTab = 'mods'">模块正确率</n-button>
-      <n-button size="small" :type="dataTab === 'week' ? 'primary' : 'default'" @click="dataTab = 'week'">近况</n-button>
-    </div>
+    <!-- 数据区（移动端 Tab 切换，Tab 条已上移至趋势面板前） -->
     <div class="data-grid" v-if="plan">
       <div class="panel" v-show="showTab('mods')">
         <div class="panel-h"><b>各模块正确率</b></div>
@@ -273,6 +275,10 @@ const sortedModules = computed(() =>
 
 @media (max-width: 768px) {
   .data-tabs { display: flex; gap: 8px; margin: 2px 0 10px; }
+  .tr-col { padding: 12px 14px; }
+  .tr-nums { gap: 14px; justify-content: space-between; }
+  .tr-v { font-size: 19px; }
+  .tr-l { font-size: 10px; }
   .trend-grid { grid-template-columns: 1fr; }
   .tr-col + .tr-col { border-left: none; border-top: 1px solid var(--line-soft); }
   .m-hero {
@@ -287,15 +293,19 @@ const sortedModules = computed(() =>
   .mh-text span { display: block; font-size: 12px; opacity: .82; margin-top: 3px; }
   .kb-head { display: none; }
 
-  /* 任务卡变单列横条：icon + 文案在左，数字在右 */
-  .task-grid { grid-template-columns: 1fr; gap: 10px; }
-  .task { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
-  .th { flex: 1; margin: 0; min-width: 0; }
-  .th span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tv { font-size: 20px; margin-left: auto; text-align: right; white-space: nowrap; }
-  .tv small { display: block; font-size: 10.5px; }
-  .tl, .track, .go { display: none; }
-  .task::after { content: '›'; color: var(--t3); font-size: 20px; margin-left: 2px; }
+  /* 任务卡 2×2 紧凑排版 */
+  .task-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .task { padding: 12px; }
+  .th { margin-bottom: 8px; gap: 8px; }
+  .th .ic { width: 30px; height: 30px; border-radius: 8px; }
+  .th .ic svg { width: 15px; height: 15px; }
+  .th b { font-size: 13px; }
+  .th span { display: none; }
+  .tv { font-size: 20px; }
+  .tv small { font-size: 10px; }
+  .tl { font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+  .tl .go { display: none; }
+  .track { margin-top: 6px; }
 
   .data-grid { grid-template-columns: 1fr; }
   .bar-cell { width: auto; }
