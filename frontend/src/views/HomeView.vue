@@ -194,4 +194,18 @@ const maxAcc = computed(() =>
 .hist-row { display:flex; align-items:center; gap:16px; padding:9px 4px; border-bottom:1px dashed #eceef4; cursor:pointer; }
 .hist-row:last-child { border-bottom:none; }
 .hist-row .link { margin-left:auto; color:#2f6fed; font-size:13px; }
+
+@media (max-width: 768px) {
+  .hero-card { padding: 16px 18px; border-radius: 14px; margin-top: 10px; }
+  .days .num { font-size: 42px; }
+  .hero-text h2 { font-size: 15px; }
+  .hero-text p { font-size: 11.5px; }
+  .hero-right { gap: 14px; }
+  .mini-stat b { font-size: 15px; }
+  .mini-stat span { font-size: 10.5px; }
+  .task-grid { gap: 10px; }
+  .t-icon { font-size: 22px; }
+  .t-num { font-size: 19px; }
+  .acc-row { grid-template-columns: 92px 1fr 78px; font-size: 12px; }
+}
 </style>

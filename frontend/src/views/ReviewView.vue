@@ -243,4 +243,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .example { color:#575e72; font-size:14px; line-height:1.7; margin-bottom:18px; }
 .word-rating { display:flex; gap:12px; justify-content:center; }
 .finish-card { text-align:center; padding:60px 0; }
+
+@media (max-width: 768px) {
+  .word { font-size: 34px; }
+  .review-card { padding: 14px; }
+  .word-rating { gap: 8px; }
+  .word-rating button { font-size: 14px !important; }
+}
 </style>

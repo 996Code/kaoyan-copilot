@@ -59,7 +59,7 @@ async function submit() {
 <style scoped>
 .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, #eef2ff 0%, #f6f7fb 60%); }
-.login-card { width: 360px; border-radius: 16px; box-shadow: 0 10px 40px rgba(30,41,80,.08);
+.login-card { width: min(360px, calc(100vw - 36px)); border-radius: 16px; box-shadow: 0 10px 40px rgba(30,41,80,.08);
   background: #fff; padding: 28px; border: 1px solid #eef0f6; }
 .login-head { text-align: center; margin-bottom: 18px; }
 .logo { width: 44px; height: 44px; margin: 0 auto 8px; border-radius: 12px; background: #2f6fed;

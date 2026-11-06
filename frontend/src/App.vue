@@ -65,6 +65,15 @@ function logout() {
           </header>
           <router-view />
         </div>
+
+        <!-- 移动端底部 Tab 栏 -->
+        <nav v-if="!inExam" class="tabbar">
+          <router-link to="/"><span class="tb-icon">🏠</span>首页</router-link>
+          <router-link to="/review"><span class="tb-icon">🔁</span>复习</router-link>
+          <router-link to="/vocab"><span class="tb-icon">📖</span>单词</router-link>
+          <router-link to="/practice"><span class="tb-icon">✏️</span>练习</router-link>
+          <router-link to="/wrongbook"><span class="tb-icon">📕</span>错题</router-link>
+        </nav>
       </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
@@ -84,6 +93,27 @@ function logout() {
 .nav a.router-link-active { background: rgba(47,111,237,.1); color: #2f6fed; font-weight: 600; }
 .right { display: flex; gap: 6px; align-items: center; }
 .username { font-size: 13px; color: #575e72; }
+.tabbar { display: none; }
+
+@media (max-width: 768px) {
+  .nav { display: none; }
+  .topbar-inner { padding: 0 14px; gap: 8px; }
+  .title { font-size: 15px; }
+  .username { display: none; }
+  .right .ghost-btn { font-size: 12px; padding: 4px 8px; }
+  .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
+  .tabbar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: rgba(255,255,255,.94); backdrop-filter: blur(12px);
+    border-top: 1px solid #e8eaf1; padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar a {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;
+    padding: 7px 0 5px; font-size: 10.5px; color: #8b93a7; text-decoration: none;
+  }
+  .tabbar a.router-link-active { color: #2f6fed; font-weight: 600; }
+  .tb-icon { font-size: 19px; line-height: 1; }
+}
 .ghost-btn { border: none; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: #575e72; }
 .ghost-btn:hover { background: rgba(128,128,128,.1); }
 </style>

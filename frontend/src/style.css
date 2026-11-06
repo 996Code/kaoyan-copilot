@@ -79,3 +79,13 @@ textarea.essay:focus { border-color: #2f6fed; }
 .page { max-width: var(--page-max); margin: 0 auto; padding: 18px 20px 60px; }
 .muted { color: #8b93a7; }
 .section-title { font-size: 13px; color: #7c849a; margin: 14px 0 6px; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .page { padding: 12px 14px 40px; }
+  .rich { font-size: 14.5px; line-height: 1.7; }
+  .opt-row { padding: 9px 10px; gap: 8px; }
+  .opt-row .opt-key { width: 24px; height: 24px; font-size: 12px; }
+  textarea.essay { font-size: 14px; min-height: 180px; }
+  .anscard .cell { width: 30px; height: 28px; }
+  .kbd-hint { display: none; }
+}

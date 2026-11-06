@@ -144,4 +144,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .example { color:#575e72; font-size:14px; line-height:1.7; margin-top:12px; }
 .mark-row { display:flex; gap:14px; justify-content:center; }
 .finish-card { text-align:center; padding:60px 0; }
+
+@media (max-width: 768px) {
+  .word { font-size: 34px; }
+  .definition { font-size: 16px; }
+  .mark-row { gap: 8px; }
+  .mark-row button { font-size: 14px !important; }
+}
 </style>

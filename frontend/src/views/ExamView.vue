@@ -295,17 +295,18 @@ onBeforeUnmount(() => {
   .anscard-close { display: block; text-align: center; font-size: 13px; color: #2f6fed;
     padding: 8px 0 4px; cursor: pointer; }
   .card-fab {
-    display: block; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
-    z-index: 25; border: none; border-radius: 24px; padding: 10px 18px;
-    background: #2f6fed; color: #fff; font-size: 14px; font-weight: 600;
+    display: block; position: fixed; right: 14px; bottom: calc(74px + env(safe-area-inset-bottom));
+    z-index: 25; border: none; border-radius: 24px; padding: 10px 16px;
+    background: #2f6fed; color: #fff; font-size: 13px; font-weight: 600;
     box-shadow: 0 6px 18px rgba(47,111,237,.4); cursor: pointer;
   }
   .q-nav {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
     background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid #eef0f6;
-    margin: 0; max-width: none;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #eef0f6;
+    margin: 0; max-width: none; gap: 8px;
   }
+  .q-nav .n-button { flex: 1; }
   .q-nav .kbd-hint { display: none; }
 }
 .section-instr { font-size: 12.5px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; margin-bottom: 12px; }
