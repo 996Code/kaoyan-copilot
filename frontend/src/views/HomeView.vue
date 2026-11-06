@@ -7,6 +7,9 @@ import AppIcon from '../components/AppIcon.vue'
 const plan = ref(null)
 const history = ref([])
 const trends = ref(null)
+const dataTab = ref('trend')  // 移动端数据区 Tab：trend / mods / week
+const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768
+const showTab = (name) => !isMobile || dataTab.value === name
 const error = ref('')
 
 onMounted(async () => {
@@ -105,7 +108,7 @@ const sortedModules = computed(() =>
     </div>
 
     <!-- 模考趋势与过线预测 -->
-    <div v-if="trends && (trends.subjects.gz199.count || trends.subjects.en2.count)" style="margin-bottom: 12px">
+    <div v-if="trends && (trends.subjects.gz199.count || trends.subjects.en2.count)" style="margin-bottom: 12px" v-show="showTab('trend')">
       <div class="panel">
         <div class="panel-h"><b>模考趋势与过线预测</b>
           <span class="muted" style="font-size:12px; margin-left:10px">估分 = 客观得分 + 主观 AI 批改；预测按近期趋势外推至考试日</span>
@@ -144,9 +147,14 @@ const sortedModules = computed(() =>
       </div>
     </div>
 
-    <!-- 数据区 -->
+    <!-- 数据区（移动端 Tab 切换，一次一块） -->
+    <div class="data-tabs">
+      <n-button size="small" :type="dataTab === 'trend' ? 'primary' : 'default'" v-if="trends?.subjects.gz199.count" @click="dataTab = 'trend'">过线预测</n-button>
+      <n-button size="small" :type="dataTab === 'mods' ? 'primary' : 'default'" @click="dataTab = 'mods'">模块正确率</n-button>
+      <n-button size="small" :type="dataTab === 'week' ? 'primary' : 'default'" @click="dataTab = 'week'">近况</n-button>
+    </div>
     <div class="data-grid" v-if="plan">
-      <div class="panel">
+      <div class="panel" v-show="showTab('mods')">
         <div class="panel-h"><b>各模块正确率</b></div>
         <table class="mods">
           <tr v-for="m in sortedModules" :key="m.module_code + m.subject_code">
@@ -165,8 +173,8 @@ const sortedModules = computed(() =>
         </table>
       </div>
 
-      <div>
-        <div class="panel" style="margin-bottom: 12px">
+      <div v-show="showTab('week')">
+        <div class="panel">
           <div class="panel-h"><b>近 7 天正确率</b></div>
           <div class="week">
             <div v-for="d in plan.recent_accuracy" :key="d.date" class="wc">
@@ -261,7 +269,10 @@ const sortedModules = computed(() =>
 .tr-bar-v { font-size: 10.5px; color: var(--t2); font-variant-numeric: tabular-nums; }
 .tr-bar-d { font-size: 9.5px; color: var(--t3); }
 
+.data-tabs { display: none; }
+
 @media (max-width: 768px) {
+  .data-tabs { display: flex; gap: 8px; margin: 2px 0 10px; }
   .trend-grid { grid-template-columns: 1fr; }
   .tr-col + .tr-col { border-left: none; border-top: 1px solid var(--line-soft); }
   .m-hero {
