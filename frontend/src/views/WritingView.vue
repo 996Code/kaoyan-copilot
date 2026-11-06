@@ -131,9 +131,13 @@ const tabOptions = Object.entries(SECTIONS).map(([k, v]) => ({ label: `${v.name}
       <span class="sub">管综两篇 + 英二两篇：框架 · 句式 · 素材（配合「AI 批改」使用：看模板 → 练真题 → AI 评分）</span>
     </div>
 
-    <!-- 移动端：下拉选择 -->
+    <!-- 移动端：下拉选择 + 当前内容直接渲染 -->
     <div class="w-select">
       <n-select v-model:value="tab" :options="tabOptions" size="large" />
+      <div v-for="b in SECTIONS[tab].blocks" :key="b.title" class="wblock panel">
+        <div class="section-title" style="font-size:14px">{{ b.title }}</div>
+        <div class="rich" v-html="renderRich(b.md)"></div>
+      </div>
     </div>
     <!-- 桌面：Tab -->
     <div class="w-tabs">
