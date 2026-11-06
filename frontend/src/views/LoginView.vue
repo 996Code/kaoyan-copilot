@@ -103,12 +103,15 @@ h2 { margin: 4px 0; }
 .switch-mode a { color: var(--blue); cursor: pointer; }
 
 @media (max-width: 860px) {
-  .login-wrap { flex-direction: column; gap: 28px; padding: 40px 20px; justify-content: center; }
-  .login-left { max-width: 360px; text-align: center; }
-  .big-num { font-size: 56px; }
-  .slogan h1 { font-size: 24px; }
-  .features { flex-direction: column; gap: 8px; margin-top: 20px; }
-  .feat { display: flex; align-items: center; gap: 12px; text-align: left; padding: 10px 14px; }
-  .feat b { margin: 0; }
+  /* 移动端：登录卡在上首屏直达，品牌介绍收为页脚 */
+  .login-wrap { flex-direction: column; gap: 20px; padding: 28px 20px; justify-content: center; }
+  .login-card { order: 0; box-shadow: 0 8px 28px rgba(30,41,80,.10); }
+  .login-left { order: 1; max-width: 360px; text-align: center; }
+  .big-num { font-size: 40px; }
+  .slogan h1 { font-size: 20px; margin: 6px 0 4px; }
+  .slogan p { font-size: 12.5px; }
+  .features { flex-direction: row; gap: 8px; margin-top: 14px; }
+  .feat { flex: 1; flex-direction: column; text-align: center; padding: 10px 6px; font-size: 11px; gap: 4px; }
+  .feat b { margin: 0; font-size: 18px; }
 }
 </style>

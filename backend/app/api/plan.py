@@ -20,6 +20,75 @@ from app.models.user import User
 
 router = APIRouter(prefix="/api/plan", tags=["plan"])
 
+GOALS = {"gz199": 120.0, "en2": 55.0}  # 国家线目标
+FULL = {"gz199": 200.0, "en2": 100.0}
+
+
+def _estimate_scores(session, user_id: int) -> dict[str, list[dict]]:
+    """按科目汇总每次已交卷模考的估分（客观 + 主观 AI 批改，未批主观按历史主观率估）。"""
+    from app.models import AnswerRecord
+
+    recs = session.execute(
+        select(ExamRecord, Subject.code, Paper.year)
+        .join(Paper, ExamRecord.paper_id == Paper.id)
+        .join(Subject, Paper.subject_id == Subject.id)
+        .where(ExamRecord.user_id == user_id, ExamRecord.status == "submitted")
+        .order_by(ExamRecord.submitted_at)
+    ).all()
+    by_sub: dict[str, list[dict]] = {}
+    for rec, sub_code, year in recs:
+        rows = session.scalars(
+            select(AnswerRecord).where(AnswerRecord.exam_id == rec.id)
+        ).all()
+        obj = sub_graded = sub_full = 0.0
+        for r in rows:
+            q = r.question
+            if q is None:
+                continue
+            score = float(r.score or 0)
+            if q.qtype == "single_choice":
+                obj += score
+            else:
+                sub_graded += score if r.score is not None else 0.0
+                sub_full += float(q.score or 0)
+                # AI 批改过（is_correct 为 None 且 score 有值）的按已批算
+        est = obj + sub_graded
+        by_sub.setdefault(sub_code, []).append({
+            "exam_id": rec.id, "year": year,
+            "objective": round(obj, 1), "subjective": round(sub_graded, 1),
+            "estimate": round(est, 1),
+            "date": rec.submitted_at.strftime("%m-%d") if rec.submitted_at else None,
+        })
+    return by_sub
+
+
+def _forecast(series: list[float], days_left: int, goal: float, full: float):
+    """线性趋势外推 + 正态达标概率。样本不足时给保守估计。"""
+    n = len(series)
+    if n == 0:
+        return None
+    mean = sum(series) / n
+    if n >= 3 and days_left > 0:
+        # 最小二乘斜率（按次序）
+        xs = list(range(n))
+        mx = sum(xs) / n
+        slope = sum((x - mx) * (y - mean) for x, y in zip(xs, series)) / sum((x - mx) ** 2 for x in xs)
+        pace = slope * min(days_left / 7.0, 6)  # 每次模考间隔近似一周，封顶 6 次增量
+        pred = mean + max(0, pace)
+    else:
+        pred = mean
+    pred = min(pred, full)
+    sigma = (sum((y - mean) ** 2 for y in series) / n) ** 0.5 if n >= 2 else full * 0.12
+    sigma = max(sigma, full * 0.05)
+    import math
+
+    z = (pred - goal) / sigma
+    prob = 0.5 * (1 + math.erf(z / math.sqrt(2)))
+    return {
+        "mean": round(mean, 1), "predicted": round(pred, 1), "goal": goal,
+        "gap": round(pred - goal, 1), "probability": round(prob * 100),
+    }
+
 
 def _local_midnight_utc() -> datetime:
     now_local = datetime.now().astimezone()
@@ -162,3 +231,22 @@ def today(user: User = Depends(current_user), session: Session = Depends(get_ses
         "recent_accuracy": recent_accuracy,
         "exams_today": exams_today,
     }
+
+
+@router.get("/trends")
+def trends(user=Depends(current_user), session: Session = Depends(get_session)):
+    """模考成绩趋势 + 过线概率（按科目）。"""
+    days_left = (date.fromisoformat(settings.exam_date) - datetime.now().astimezone().date()).days
+    by_sub = _estimate_scores(session, user.id)
+    out = {"days_left": days_left, "subjects": {}}
+    for code in ("gz199", "en2"):
+        series = by_sub.get(code) or []
+        ests = [x["estimate"] for x in series]
+        out["subjects"][code] = {
+            "exams": series,
+            "count": len(series),
+            "forecast": _forecast(ests, days_left, GOALS[code], FULL[code]),
+            "goal": GOALS[code],
+            "full": FULL[code],
+        }
+    return out

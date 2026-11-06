@@ -170,6 +170,15 @@ CARDS = [
 
 
 def main() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "extra", Path(__file__).parent / "seed_knowledge_extra.py"
+    )
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    global CARDS
+    CARDS = CARDS + m.EXTRA
     from sqlalchemy import delete
 
     from app.core.db import SessionLocal

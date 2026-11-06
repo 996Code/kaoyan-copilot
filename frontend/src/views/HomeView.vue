@@ -6,12 +6,14 @@ import AppIcon from '../components/AppIcon.vue'
 
 const plan = ref(null)
 const history = ref([])
+const trends = ref(null)
 const error = ref('')
 
 onMounted(async () => {
   try {
     plan.value = await api('/api/plan/today')
     history.value = await api('/api/exams/history')
+    trends.value = await api('/api/plan/trends')
   } catch (e) {
     error.value = e.message
   }
@@ -98,6 +100,46 @@ const sortedModules = computed(() =>
         <div class="tl">
           <span>{{ plan.exams_today }} 场今日已考</span>
           <span class="go">查看 ›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模考趋势与过线预测 -->
+    <div v-if="trends && (trends.subjects.gz199.count || trends.subjects.en2.count)" style="margin-bottom: 12px">
+      <div class="panel">
+        <div class="panel-h"><b>模考趋势与过线预测</b>
+          <span class="muted" style="font-size:12px; margin-left:10px">估分 = 客观得分 + 主观 AI 批改；预测按近期趋势外推至考试日</span>
+        </div>
+        <div class="trend-grid">
+          <div v-for="(sub, code) in trends.subjects" :key="code" class="tr-col" v-show="sub.count">
+            <div class="tr-head">
+              <b>{{ code === 'gz199' ? '199 管综' : '英语二' }}</b>
+              <span class="muted" style="font-size:12px">{{ sub.count }} 场 · 目标 {{ sub.goal }}</span>
+            </div>
+            <div v-if="sub.forecast" class="tr-nums">
+              <div class="tr-cell">
+                <span class="tr-v">{{ sub.forecast.predicted }}</span>
+                <span class="tr-l">预测分</span>
+              </div>
+              <div class="tr-cell">
+                <span class="tr-v" :style="{ color: sub.forecast.probability >= 60 ? 'var(--ok)' : sub.forecast.probability >= 30 ? 'var(--warn)' : 'var(--bad)' }">{{ sub.forecast.probability }}%</span>
+                <span class="tr-l">过线概率</span>
+              </div>
+              <div class="tr-cell">
+                <span class="tr-v" :style="{ color: sub.forecast.gap >= 0 ? 'var(--ok)' : 'var(--bad)' }">{{ sub.forecast.gap >= 0 ? '+' : '' }}{{ sub.forecast.gap }}</span>
+                <span class="tr-l">距目标</span>
+              </div>
+            </div>
+            <div class="tr-bars">
+              <div v-for="(e, i) in sub.exams" :key="e.exam_id" class="tr-bar-col" :title="`${e.year} 年 ${e.date}：估 ${e.estimate}（客观 ${e.objective}）`">
+                <div class="tr-bar-wrap">
+                  <div class="tr-bar" :style="{ height: Math.max(3, e.estimate / sub.full * 100) + '%' }"></div>
+                </div>
+                <span class="tr-bar-v">{{ e.estimate }}</span>
+                <span class="tr-bar-d">{{ e.date }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -204,7 +246,24 @@ const sortedModules = computed(() =>
 /* 移动端 hero：仅手机显示 */
 .m-hero { display: none; }
 
+.trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.tr-col { padding: 14px 18px; }
+.tr-col + .tr-col { border-left: 1px solid var(--line-soft); }
+.tr-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.tr-nums { display: flex; gap: 22px; margin-bottom: 12px; }
+.tr-cell { text-align: center; }
+.tr-v { display: block; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tr-l { font-size: 11.5px; color: var(--t3); }
+.tr-bars { display: flex; gap: 8px; align-items: flex-end; height: 64px; }
+.tr-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.tr-bar-wrap { flex: 1; width: 62%; display: flex; align-items: flex-end; }
+.tr-bar { width: 100%; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--blue-soft), var(--blue)); min-height: 3px; }
+.tr-bar-v { font-size: 10.5px; color: var(--t2); font-variant-numeric: tabular-nums; }
+.tr-bar-d { font-size: 9.5px; color: var(--t3); }
+
 @media (max-width: 768px) {
+  .trend-grid { grid-template-columns: 1fr; }
+  .tr-col + .tr-col { border-left: none; border-top: 1px solid var(--line-soft); }
   .m-hero {
     display: flex; align-items: center; gap: 16px;
     background: linear-gradient(120deg, var(--blue) 0%, var(--blue-deep) 100%);
