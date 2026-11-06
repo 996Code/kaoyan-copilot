@@ -1,0 +1,10 @@
+# 构建上下文瘦身：大数据目录与本地依赖不入镜像
+data/
+frontend/node_modules/
+frontend/dist/
+backend/.venv/
+.git/
+docs/
+design-demos/
+*.md
+.DS_Store

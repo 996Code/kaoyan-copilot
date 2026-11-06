@@ -1,6 +1,24 @@
 # 考研助手 · 运行手册
 
-## 启动（生产模式，推荐日常使用）
+## 容器化部署（推荐，一键）
+
+```bash
+./deploy.sh
+# 完整流程：停掉旧容器 → 构建镜像（npm 淘宝源/pip 清华源）→ 启动新容器 → 健康检查
+# 端口 28080；单容器跑「FastAPI + 前端产物」，数据库用现成的 PG（不在容器内）
+```
+
+数据库连接优先级：环境变量 `DATABASE_URL` > `backend/.env` 的 `DATABASE_URL`（线上 PG 配这里）> 兜底 `host.docker.internal:5432`。`.env` 里写 `localhost` 会自动转换为 `host.docker.internal`（容器内 localhost 指向容器自身）。
+
+```bash
+PORT=3000 ./deploy.sh                 # 换宿主机端口
+DATABASE_URL=postgres://... ./deploy.sh  # 临时覆盖数据库
+docker logs -f kaoyan-copilot         # 看日志
+```
+
+说明：`data/assets`（原卷切片/图表）不入镜像，部署脚本检测到目录会自动只读挂载进容器。
+
+## 本地启动（开发模式）
 
 ```bash
 # 1. 后端（同时服务 API 与前端构建产物；--host 0.0.0.0 支持局域网访问）
