@@ -161,7 +161,8 @@ const tabOptions = Object.entries(SECTIONS).map(([k, v]) => ({ label: `${v.name}
 
 .w-select { display: none; }
 @media (max-width: 768px) {
-  .w-select { display: block; margin-bottom: 12px; }
+  .w-select { display: block; }
+  .w-select > .n-select { margin-bottom: 14px; }
   .w-tabs { display: none; }
 }
 </style>
