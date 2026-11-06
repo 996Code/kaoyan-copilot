@@ -14,6 +14,7 @@ from app.core.srs import (
     review,
 )
 from app.models import Question, ReviewCard
+from app.models.knowledge import KnowledgeCard
 from app.models.user import User
 from app.models.word import Word
 
@@ -43,6 +44,17 @@ def _card_payload(session: Session, row: ReviewCard) -> dict:
                 "group_material": q.group.material if q.group else None,
                 "group_options": q.group.options if q.group else None,
                 "group_image": q.group.material_image if q.group else None,
+            },
+        }
+    if row.card_type == "knowledge":
+        k = session.get(KnowledgeCard, row.ref_id)
+        if k is None:
+            return {**base, "missing": True}
+        return {
+            **base,
+            "knowledge": {
+                "id": k.id, "title": k.title, "back": k.back,
+                "category": k.category, "module_name": k.module_name,
             },
         }
     w = session.get(Word, row.ref_id)
@@ -78,7 +90,7 @@ def queue(
     rows = session.scalars(stmt).all()
     payloads = [_card_payload(session, r) for r in rows]
 
-    due_counts = {"wrong_question": 0, "word": 0}
+    due_counts = {"wrong_question": 0, "word": 0, "knowledge": 0}
     for ct in due_counts:
         due_counts[ct] = len(
             session.scalars(
@@ -96,8 +108,8 @@ def queue(
 @router.get("/stats")
 def stats(user: User = Depends(current_user), session: Session = Depends(get_session)):
     now = datetime.now(timezone.utc)
-    total = {"wrong_question": 0, "word": 0}
-    due = {"wrong_question": 0, "word": 0}
+    total = {"wrong_question": 0, "word": 0, "knowledge": 0}
+    due = {"wrong_question": 0, "word": 0, "knowledge": 0}
     for ct in total:
         total[ct] = len(
             session.scalars(_scoped(session, user.id).where(ReviewCard.card_type == ct)).all()
@@ -110,6 +122,27 @@ def stats(user: User = Depends(current_user), session: Session = Depends(get_ses
             ).all()
         )
     return {"total": total, "due": due}
+
+
+@router.get("/forecast")
+def forecast(days: int = 7, user: User = Depends(current_user), session: Session = Depends(get_session)):
+    """未来 N 天复习压力预测：每天到期量（按卡片类型分）。"""
+    now = datetime.now(timezone.utc)
+    rows = session.scalars(
+        _scoped(session, user.id).where(ReviewCard.due <= now + __import__("datetime").timedelta(days=days))
+    ).all()
+    by_date: dict = {}
+    for r in rows:
+        d = r.due.astimezone().strftime("%m-%d")
+        slot = by_date.setdefault(d, {"wrong_question": 0, "word": 0, "knowledge": 0, "date": d})
+        slot[r.card_type] = slot.get(r.card_type, 0) + 1
+    out = []
+    for i in range(days):
+        d = (now + __import__("datetime").timedelta(days=i)).astimezone().strftime("%m-%d")
+        slot = by_date.get(d) or {"date": d, "wrong_question": 0, "word": 0, "knowledge": 0}
+        slot["total"] = slot["wrong_question"] + slot["word"] + slot["knowledge"]
+        out.append(slot)
+    return out
 
 
 class AnswerIn(BaseModel):

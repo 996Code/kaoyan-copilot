@@ -42,9 +42,11 @@ function logout() {
 
 /* 移动端「更多」菜单 */
 const moreOpen = ref(false)
-const moreActive = computed(() => route.path.startsWith('/papers') || route.path.startsWith('/admin'))
+const moreActive = computed(() => ['/papers', '/admin', '/knowledge', '/writing'].some(p => route.path.startsWith(p)))
 const moreItems = computed(() => {
   const items = [
+    { to: '/knowledge', icon: 'ai', label: '知识卡片' },
+    { to: '/writing', icon: 'vocab', label: '写作模板' },
     { to: '/papers/gz199', icon: 'exam', label: '管综真题' },
     { to: '/papers/en2', icon: 'exam', label: '英二真题' },
   ]
@@ -83,8 +85,10 @@ function goMore(to) {
                 <router-link to="/">首页</router-link>
                 <router-link to="/review">复习</router-link>
                 <router-link to="/vocab">背单词</router-link>
+                <router-link to="/knowledge">知识卡片</router-link>
                 <router-link to="/practice">专项练习</router-link>
                 <router-link to="/wrongbook">错题本</router-link>
+                <router-link to="/writing">写作模板</router-link>
                 <router-link to="/papers/gz199">管综真题</router-link>
                 <router-link to="/papers/en2">英二真题</router-link>
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>

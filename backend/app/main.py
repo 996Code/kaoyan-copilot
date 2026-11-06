@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.api import admin, ai, auth, catalog, exams, papers, plan, practice, review, vocab, wrongbook
+from app.api import admin, ai, auth, catalog, exams, knowledge, papers, plan, practice, review, vocab, wrongbook
 from app.core.auth import current_user
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -24,6 +24,7 @@ app.include_router(auth.router)
 for r in (
     catalog.router, papers.router, exams.router, practice.router,
     wrongbook.router, ai.router, review.router, vocab.router, plan.router, admin.router,
+    knowledge.router,
 ):
     app.include_router(r, dependencies=[Depends(current_user)])
 

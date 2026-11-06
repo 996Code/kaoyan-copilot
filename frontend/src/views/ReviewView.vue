@@ -19,9 +19,11 @@ const result = ref(null) // answer_question 返回
 const revealed = ref(false) // 单词卡翻面
 const ratingWord = ref(false)
 const stats = reactive({ done: 0, correctCount: 0 })
-const cardFilter = ref('')  // ''=全部 / wrong_question / word
+const cardFilter = ref('')  // ''=全部 / wrong_question / word / knowledge
+const forecast = ref([])
 
 const card = computed(() => cards.value[idx.value] || null)
+const maxFc = computed(() => Math.max(1, ...forecast.value.map(d => d.total)))
 const finished = computed(() => !loading.value && cards.value.length > 0 && idx.value >= cards.value.length)
 const dueLeft = ref({ wrong_question: 0, word: 0 })
 
@@ -30,6 +32,7 @@ async function load() {
   try {
     const qp = cardFilter.value ? `&card_type=${cardFilter.value}` : ''
     const data = await api(`/api/review/queue?limit=40${qp}`)
+    forecast.value = await api('/api/review/forecast')
     cards.value = data.cards
     dueLeft.value = data.due_counts
     // 恢复上次复习到的位置（队列变化时自动收敛到有效范围）
@@ -149,6 +152,27 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <n-button size="small" :type="cardFilter === 'word' ? 'primary' : 'default'" @click="cardFilter = 'word'; load()">
           单词卡 {{ dueLeft.word }}
         </n-button>
+        <n-button v-if="dueLeft.knowledge" size="small" :type="cardFilter === 'knowledge' ? 'primary' : 'default'" @click="cardFilter = 'knowledge'; load()">
+          知识卡 {{ dueLeft.knowledge }}
+        </n-button>
+      </div>
+
+      <div v-if="forecast.length" class="fc panel">
+        <div class="fc-title">未来 7 天复习压力</div>
+        <div class="fc-bars">
+          <div v-for="d in forecast" :key="d.date" class="fc-col" :title="`${d.date}：错题${d.wrong_question} 单词${d.word} 知识${d.knowledge}`">
+            <div class="fc-stack">
+              <i v-if="d.knowledge" class="seg kn" :style="{ height: (d.knowledge / maxFc) * 100 + '%' }"></i>
+              <i v-if="d.word" class="seg wd" :style="{ height: (d.word / maxFc) * 100 + '%' }"></i>
+              <i v-if="d.wrong_question" class="seg wr" :style="{ height: (d.wrong_question / maxFc) * 100 + '%' }"></i>
+            </div>
+            <span class="fc-v">{{ d.total }}</span>
+            <span class="fc-d">{{ d.date.slice(3) }}</span>
+          </div>
+        </div>
+        <div class="fc-legend muted">
+          <span><i class="seg wr"></i>错题</span><span><i class="seg wd"></i>单词</span><span><i class="seg kn"></i>知识</span>
+        </div>
       </div>
     </div>
 
@@ -211,6 +235,28 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         </div>
       </div>
 
+      <!-- 知识卡 -->
+      <div v-else-if="card.card_type === 'knowledge'" class="review-card word-card">
+        <div class="rc-head">
+          <n-tag size="small">{{ card.knowledge.module_name }} · {{ card.knowledge.category }}</n-tag>
+          <span class="muted" style="font-size:12px">第 {{ card.reps }} 次复习</span>
+        </div>
+        <div class="word-front">
+          <div class="word" style="font-size:26px">{{ card.knowledge.title }}</div>
+          <n-button v-if="!revealed" size="large" style="margin-top:20px" @click="revealed = true">
+            查看内容（空格）
+          </n-button>
+        </div>
+        <div v-if="revealed" class="word-back">
+          <div class="rich" style="text-align:left" v-html="renderRich(card.knowledge.back)"></div>
+          <div class="word-rating">
+            <n-button size="large" type="error" ghost @click="rateWord(1)">没记住 (1)</n-button>
+            <n-button size="large" @click="rateWord(3)">记得 (2)</n-button>
+            <n-button size="large" type="success" ghost @click="rateWord(4)">很熟 (3)</n-button>
+          </div>
+        </div>
+      </div>
+
       <!-- 单词卡 -->
       <div v-else class="review-card word-card">
         <div class="rc-head">
@@ -254,7 +300,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <style scoped>
 .pstats { display:flex; gap:18px; font-size:13px; color:var(--t3); margin-bottom:10px; }
-.filter-bar { display:flex; gap:8px; margin:12px 0 4px; }
+.filter-bar { display:flex; gap:8px; margin:12px 0 4px; flex-wrap:wrap; }
+.fc { display:flex; align-items:center; gap:14px; padding:12px 16px; margin:10px 0 14px; border-radius:var(--r-card); }
+.fc-title { font-size:13px; font-weight:600; color:var(--t2); writing-mode:vertical-lr; letter-spacing:2px; }
+.fc-bars { flex:1; display:flex; gap:8px; height:72px; }
+.fc-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
+.fc-stack { flex:1; width:58%; display:flex; flex-direction:column-reverse; border-radius:4px 4px 0 0; overflow:hidden; }
+.seg { display:block; width:100%; }
+.seg.wr { background:var(--blue); } .seg.wd { background:var(--ok); } .seg.kn { background:var(--warn); }
+.fc-v { font-size:11px; color:var(--t2); font-variant-numeric:tabular-nums; }
+.fc-d { font-size:10px; color:var(--t3); }
+.fc-legend { display:flex; gap:10px; font-size:11px; }
+.fc-legend .seg { width:9px; height:9px; display:inline-block; border-radius:2px; margin-right:3px; vertical-align:-1px; }
 .review-card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
 .rc-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
 .feedback { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line-soft); }

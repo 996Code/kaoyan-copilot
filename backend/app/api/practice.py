@@ -18,6 +18,8 @@ def questions(
     subject: str,
     module: str,
     year: int | None = None,
+    min_number: int | None = None,
+    max_number: int | None = None,
     limit: int = 20,
     random: bool = True,
     session: Session = Depends(get_session),
@@ -33,6 +35,10 @@ def questions(
     stmt = select(Question).where(Question.module_id == mod.id)
     if year:
         stmt = stmt.where(Question.year == year)
+    if min_number is not None:
+        stmt = stmt.where(Question.number >= min_number)
+    if max_number is not None:
+        stmt = stmt.where(Question.number <= max_number)
     stmt = stmt.order_by(func.random() if random else (Question.year.desc(), Question.number))
     stmt = stmt.limit(min(limit, 100))
     rows = session.scalars(stmt).all()

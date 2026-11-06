@@ -18,6 +18,30 @@ const moduleCode = ref('math')
 const year = ref(null)
 const count = ref(10)
 
+// 题型专项包（海绵刷题营思路：按题型集中突破）
+const PACKS = [
+  { label: '条充专项', subject: 'gz199', module: 'math', min: 16, max: 25 },
+  { label: '数学求解', subject: 'gz199', module: 'math', min: 1, max: 15 },
+  { label: '逻辑推理', subject: 'gz199', module: 'logic' },
+  { label: '英二完形', subject: 'en2', module: 'cloze' },
+  { label: '英二阅读', subject: 'en2', module: 'reading' },
+]
+const activePack = ref(null)
+function packActive(pk) {
+  return activePack.value && activePack.value.label === pk.label
+}
+function applyPack(pk) {
+  activePack.value = pk
+  subject.value = pk.subject
+  moduleCode.value = pk.module
+  minNumber.value = pk.min || null
+  maxNumber.value = pk.max || null
+  year.value = null
+  start()
+}
+const minNumber = ref(null)
+const maxNumber = ref(null)
+
 const questions = ref([])
 const loading = ref(false)
 const current = ref(0)
@@ -60,6 +84,8 @@ async function start() {
   try {
     const params = new URLSearchParams({ subject: subject.value, module: moduleCode.value, limit: String(count.value), random: 'true' })
     if (year.value) params.set('year', String(year.value))
+    if (minNumber.value != null) params.set('min_number', String(minNumber.value))
+    if (maxNumber.value != null) params.set('max_number', String(maxNumber.value))
     questions.value = await api(`/api/practice/questions?${params}`)
     current.value = 0
     myAnswer.value = null
@@ -145,7 +171,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <p class="muted" style="margin:0 0 14px">按模块/年份抽题，即答即判，错题自动进错题记录（AI 讲解即将上线）</p>
 
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:16px">
-      <div class="filters">
+      <div class="packs">
+        <span class="packs-label muted">专项包：</span>
+        <n-button v-for="pk in PACKS" :key="pk.label" size="tiny"
+          :type="packActive(pk) ? 'primary' : 'default'" @click="applyPack(pk)">
+          {{ pk.label }}
+        </n-button>
+      </div>
+      <div class="filters" style="margin-top:10px">
         <n-select v-model:value="subject" :options="subjects.map(s => ({ label: s.name, value: s.code }))"
           style="width:200px" @update:value="moduleCode = moduleOptions[0]?.value" />
         <n-select v-model:value="moduleCode" :options="moduleOptions" style="width:150px" />
@@ -206,6 +239,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <style scoped>
 .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.packs { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.packs-label { font-size:12px; }
 .pstats { display: flex; gap: 18px; font-size: 13px; color: var(--t3); margin-bottom: 10px; }
 .practice-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
 .feedback { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-soft); }
