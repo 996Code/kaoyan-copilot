@@ -16,31 +16,27 @@ const subjects = [
   { code: 'gz199', name: '199 管综' },
   { code: 'en2', name: '英语二' },
 ]
-// 恢复上次的筛选与浏览位置（刷新/重进不再从头来）
+// 恢复上次的筛选与浏览位置
 const saved = recall('wb_state', {}) || {}
 const subject = ref(saved.subject || 'gz199')
 const showMastered = ref(saved.showMastered || false)
 const moduleFilter = ref(saved.module ?? null)
+const idx = ref(saved.idx || 0)
 
 const modules = ref([])
 const items = ref([])
 const loading = ref(false)
-const openAnalysis = ref({}) // qid -> bool
-const expanded = ref({}) // qid -> 是否展开完整题目
-// 移动端更克制：默认 10 条；桌面 30 条
-const mobileDefault = typeof window !== 'undefined' && window.innerWidth <= 768 ? 10 : 30
-const visibleCount = ref(saved.visibleCount || mobileDefault)
+const showNav = ref(false) // 答题卡面板
+const collapseAnalysis = ref({}) // qid -> bool（默认展开解析）
 
 const moduleOptions = computed(() => [
   { label: '全部模块', value: null },
   ...modules.value.map((m) => ({ label: m.name, value: m.code })),
 ])
 
-const visibleItems = computed(() => items.value.slice(0, visibleCount.value))
-
+const item = computed(() => items.value[idx.value] || null)
 const activeStats = ref({})
 
-let restoredScroll = false
 async function load() {
   loading.value = true
   try {
@@ -48,14 +44,11 @@ async function load() {
     if (moduleFilter.value) params.set('module', moduleFilter.value)
     items.value = await api(`/api/wrongbook?${params}`)
     activeStats.value = await api(`/api/wrongbook/stats?subject=${subject.value}`)
+    idx.value = Math.min(idx.value, Math.max(0, items.value.length - 1))
   } catch (e) {
     message.error(e.message)
   } finally {
     loading.value = false
-    if (!restoredScroll && saved.scrollTop) {
-      requestAnimationFrame(() => window.scrollTo({ top: saved.scrollTop }))
-      restoredScroll = true
-    }
   }
 }
 
@@ -64,58 +57,71 @@ function persist() {
     subject: subject.value,
     showMastered: showMastered.value,
     module: moduleFilter.value,
-    visibleCount: visibleCount.value,
-    scrollTop: window.scrollY,
+    idx: idx.value,
   })
 }
 
 watch([subject, showMastered, moduleFilter], () => {
-  visibleCount.value = 30
-  window.scrollTo({ top: 0 })
+  idx.value = 0
   load()
 })
-const onScroll = () => persist()
-window.addEventListener('scroll', onScroll, { passive: true })
-onBeforeUnmount(() => {
-  persist()
-  window.removeEventListener('scroll', onScroll)
-})
+watch(idx, persist)
+onBeforeUnmount(persist)
 
-async function toggleMastered(item) {
-  const q = item.question
+function goto(i) {
+  if (i < 0 || i >= items.value.length) return
+  idx.value = i
+  showNav.value = false
+  window.scrollTo({ top: 0 })
+}
+
+async function toggleMastered(it) {
+  const q = it.question
   try {
     await api(`/api/wrongbook/${q.id}/master`, {
       method: 'POST',
-      body: { mastered: !item.mastered },
+      body: { mastered: !it.mastered },
     })
-    item.mastered = !item.mastered
-    if (!showMastered.value && item.mastered) {
-      items.value = items.value.filter((x) => x.question.id !== q.id)
+    it.mastered = !it.mastered
+    message.success(it.mastered ? '已标记消灭，即将跳到下一题' : '已放回待巩固')
+    if (it.mastered) {
+      setTimeout(() => {
+        const nextIdx = items.value.findIndex((x) => !x.mastered)
+        if (nextIdx >= 0) goto(nextIdx)
+        else load()
+      }, 1400)
     }
-    message.success(item.mastered ? '已标记消灭 ✅' : '已放回待巩固')
-    load()
   } catch (e) {
     message.error(e.message)
   }
 }
 
-function groupOf(item) {
-  if (!item.question.group_material && !item.question.group_options && !item.question.group_image && !item.question.group_title) return null
+function groupOf(it) {
+  const q = it.question
+  if (!q.group_material && !q.group_options && !q.group_image && !q.group_title) return null
   return {
-    gtype: item.question.group_options ? 'matching' : 'reading',
-    title: item.question.group_title,
-    material: item.question.group_material,
-    options: item.question.group_options,
-    material_image: item.question.group_image,
+    gtype: q.group_options ? 'matching' : /\{\{\d+\}\}/.test(q.group_material || '') ? 'cloze' : 'reading',
+    title: q.group_title,
+    material: q.group_material,
+    options: q.group_options,
+    material_image: q.group_image,
   }
 }
 
-function explainEndpoint(item) {
-  const sa = item.last_answer != null ? `?student_answer=${encodeURIComponent(item.last_answer)}` : ''
-  return `/api/ai/explain/${item.question.id}${sa}`
+function explainEndpoint(it) {
+  const sa = it.last_answer != null ? `?student_answer=${encodeURIComponent(it.last_answer)}` : ''
+  return `/api/ai/explain/${it.question.id}${sa}`
+}
+
+function onKey(e) {
+  const tag = (e.target.tagName || '').toLowerCase()
+  if (tag === 'textarea' || tag === 'input') return
+  if (e.key === 'ArrowRight' || e.key === 'k') { goto(idx.value + 1); e.preventDefault() }
+  if (e.key === 'ArrowLeft' || e.key === 'j') { goto(idx.value - 1); e.preventDefault() }
 }
 
 onMounted(async () => {
+  window.addEventListener('keydown', onKey)
   try {
     const subs = await api('/api/subjects')
     const sub = subs.find((s) => s.code === subject.value)
@@ -125,28 +131,23 @@ onMounted(async () => {
   }
   load()
 })
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
   <div class="page">
-    <div class="wb-head">
-      <h2 style="margin:18px 0 4px">错题本</h2>
-      <p class="muted" style="margin:0">
-        模考与练习中答错的题自动归集；反复错的题错次会累计。「已消灭」= 你确定掌握了。
-      </p>
-    </div>
-
-    <n-card :bordered="false" style="border-radius:14px; margin-bottom:14px">
+    <!-- 筛选条 -->
+    <n-card :bordered="false" style="border-radius: var(--r-card); margin-bottom: 12px">
       <div class="wb-filters">
         <n-button v-for="s in subjects" :key="s.code" size="small"
           :type="subject === s.code ? 'primary' : 'default'" @click="subject = s.code">
           {{ s.name }}
         </n-button>
         <span v-for="(st, code) in activeStats" :key="code" class="muted stat-chip">
-          {{ (modules.find(m => m.code === code)?.name) || code }}：待巩固 {{ st.active }} / 已消灭 {{ st.mastered }}
+          {{ (modules.find(m => m.code === code)?.name) || code }}：待巩固 {{ st.active }}
         </span>
         <span style="flex:1"></span>
-        <n-select v-model:value="moduleFilter" :options="moduleOptions" size="small" style="width:150px" />
+        <n-select v-model:value="moduleFilter" :options="moduleOptions" size="small" style="width:140px" />
         <n-button size="small" :type="showMastered ? 'warning' : 'default'" @click="showMastered = !showMastered">
           {{ showMastered ? '看已消灭' : '看待巩固' }}
         </n-button>
@@ -157,68 +158,81 @@ onMounted(async () => {
     <n-empty v-else-if="!items.length" description="这个视图下没有错题——要么你很强，要么还没开始做题"
       style="margin:60px 0" />
 
-    <div v-for="item in visibleItems" :key="item.question.id" class="wb-card"
-      :class="{ closed: !expanded[item.question.id] }">
-      <div class="wb-meta" @click="expanded[item.question.id] = !expanded[item.question.id]">
-        <n-tag type="error" size="small">错 {{ item.wrong_count }} 次</n-tag>
-        <span class="wb-preview">
-          {{ item.question.year }} 年 · {{ item.module.name }} · 第 {{ item.question.number }} 题
-        </span>
-        <n-tag v-if="item.question.disputed" type="warning" size="small">争议</n-tag>
-        <span class="wb-toggle">{{ expanded[item.question.id] ? '收起 ▴' : '展开 ▾' }}</span>
+    <template v-else-if="item">
+      <!-- 导航条 + 答题卡开关 -->
+      <div class="nav-bar panel">
+        <n-button quaternary size="small" :disabled="idx === 0" @click="goto(idx - 1)">‹ 上一题</n-button>
+        <span class="nav-pos">第 {{ idx + 1 }} / {{ items.length }} 题</span>
+        <n-button size="small" @click="showNav = !showNav">答题卡</n-button>
+        <n-button quaternary size="small" :disabled="idx === items.length - 1" @click="goto(idx + 1)">下一题 ›</n-button>
       </div>
 
-      <template v-if="expanded[item.question.id]">
-      <div class="wb-meta-sub muted">
-        最近做错 {{ (item.last_wrong_at || '').replace('T', ' ').slice(0, 16) }}
-        <n-button size="tiny" :type="item.mastered ? 'success' : 'default'" style="margin-left:auto"
-          @click.stop="toggleMastered(item)">
-          {{ item.mastered ? '已消灭（撤销）' : '标记已消灭' }}
-        </n-button>
-      </div>
-
-      <GroupMaterial v-if="groupOf(item)" :group="groupOf(item)" />
-      <QuestionItem :q="item.question" :model-value="item.question.answer" mode="review"
-        :result="{ your_answer: item.last_answer, correct_answer: item.question.answer }"
-        :shared-options="item.question.group_options" />
-
-      <div v-if="item.question.qtype === 'single_choice'" class="verdict muted">
-        我答：<b class="bad">{{ item.last_answer ?? '未答' }}</b>
-        <span style="margin-left:12px">正确：<b class="ok">{{ item.question.answer }}</b></span>
-      </div>
-
-      <div v-if="item.question.analysis" class="analysis">
-        <div class="section-title toggle" @click="openAnalysis[item.question.id] = !openAnalysis[item.question.id]">
-          {{ openAnalysis[item.question.id] ? '▾' : '▸' }} 参考解析
+      <!-- 答题卡面板 -->
+      <div class="nav-grid panel" :class="{ open: showNav }">
+        <div class="anscard">
+          <div v-for="(it, i) in items" :key="it.question.id" class="cell"
+            :class="{ answered: it.mastered, current: i === idx }"
+            @click="goto(i)">
+            {{ it.question.number || i + 1 }}
+          </div>
         </div>
-        <div v-show="openAnalysis[item.question.id]" class="rich" v-html="renderRich(item.question.analysis)"></div>
+        <div class="muted" style="font-size:11.5px; margin-top:8px">
+          橙框＝当前 · 深色＝已消灭 · ←→ 切题
+        </div>
       </div>
 
-      <AiPanel :endpoint="explainEndpoint(item)" />
-      </template>
-    </div>
+      <!-- 当前错题 -->
+      <div class="wb-card panel">
+        <div class="wb-meta">
+          <n-tag type="error" size="small">错 {{ item.wrong_count }} 次</n-tag>
+          <n-tag v-if="item.question.disputed" type="warning" size="small">答案存在版本争议</n-tag>
+          <n-tag v-if="item.mastered" type="success" size="small">已消灭</n-tag>
+          <span class="muted meta-text">
+            {{ item.question.year }} 年 · {{ item.module.name }} · 第 {{ item.question.number }} 题
+            · 最近做错 {{ (item.last_wrong_at || '').replace('T', ' ').slice(0, 16) }}
+          </span>
+          <n-button size="tiny" :type="item.mastered ? 'success' : 'default'" style="margin-left:auto"
+            @click="toggleMastered(item)">
+            {{ item.mastered ? '已消灭（撤销）' : '标记已消灭' }}
+          </n-button>
+        </div>
 
-    <div v-if="items.length > visibleCount" class="load-more">
-      <n-button @click="visibleCount += 30; persist()">
-        加载更多（{{ visibleItems.length }} / {{ items.length }}）
-      </n-button>
-    </div>
+        <GroupMaterial v-if="groupOf(item)" :group="groupOf(item)" />
+        <QuestionItem :q="item.question" :model-value="item.last_answer" mode="review"
+          :result="{ your_answer: item.last_answer, correct_answer: item.question.answer }"
+          :shared-options="item.question.group_options" />
+
+        <div class="verdict muted">
+          我答：<b class="bad">{{ item.last_answer ?? '未答' }}</b>
+          <span style="margin-left:12px">正确：<b class="ok">{{ item.question.answer }}</b></span>
+        </div>
+
+        <div v-if="item.question.analysis" class="analysis">
+          <div class="section-title toggle"
+            @click="collapseAnalysis[item.question.id] = !collapseAnalysis[item.question.id]">
+            {{ collapseAnalysis[item.question.id] ? '▸ 显示解析' : '▾ 收起解析' }}
+          </div>
+          <div v-show="!collapseAnalysis[item.question.id]" class="rich"
+            v-html="renderRich(item.question.analysis)"></div>
+        </div>
+
+        <AiPanel :endpoint="explainEndpoint(item)" />
+      </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .wb-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .stat-chip { font-size: 12.5px; }
-.wb-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
-.wb-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; cursor: pointer; user-select: none; }
-.wb-meta-sub { display: flex; align-items: center; font-size: 12px; margin-bottom: 8px; }
-.wb-preview { font-size: 13px; color: var(--t2); flex: 1; min-width: 0; }
-.wb-toggle { margin-left: auto; color: var(--blue); font-size: 12.5px; white-space: nowrap; }
-.wb-card.closed { padding: 12px 16px; }
-.wb-card.closed .wb-meta { margin-bottom: 0; }
+.nav-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; margin-bottom: 12px; gap: 8px; }
+.nav-pos { font-size: 13.5px; color: var(--t2); font-variant-numeric: tabular-nums; }
+.nav-grid { padding: 12px 14px; margin-bottom: 12px; display: none; }
+.nav-grid.open { display: block; }
+.wb-card { padding: 16px 18px; margin-bottom: 14px; }
+.wb-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .meta-text { font-size: 12.5px; }
-.verdict { margin-top: 8px; font-size: 14px; }
+.verdict { margin-top: 8px; font-size: 14px; padding: 8px 12px; background: var(--line-soft); border-radius: 8px; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }
 .toggle { cursor: pointer; user-select: none; }
-.load-more { text-align: center; padding: 16px 0 8px; }
 </style>
