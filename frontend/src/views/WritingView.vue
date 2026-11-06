@@ -126,7 +126,7 @@ Several factors may account for this [trend/phenomenon]. **First**, __. **Moreov
 <template>
   <div class="page">
     <div class="kb-head">
-      <h1>写作模板库</h1>
+      <h1 class="page-h2">写作模板库</h1>
       <span class="sub">管综两篇 + 英二两篇：框架 · 句式 · 素材（配合「AI 批改」使用：看模板 → 练真题 → AI 评分）</span>
     </div>
 

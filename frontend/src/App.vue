@@ -20,6 +20,16 @@ const daysLeft = computed(() => {
 
 const inExam = computed(() => route.path.startsWith('/exam/'))
 const isLogin = computed(() => route.path === '/login')
+const PAGE_TITLES = [
+  ['/review', '复习中心'], ['/vocab', '背单词'], ['/practice', '专项练习'],
+  ['/wrongbook', '错题本'], ['/knowledge', '知识卡片'], ['/writing', '写作模板'],
+  ['/admin', '系统管理'], ['/papers', '真题模考'],
+]
+const pageTitle = computed(() => {
+  void route.fullPath
+  const hit = PAGE_TITLES.find(([p]) => route.path.startsWith(p))
+  return hit ? hit[1] : ''
+})
 // localStorage 非响应式：借路由变化触发重算（登录/退出必然改变路由）
 const isLoggedIn = computed(() => {
   void route.fullPath
@@ -81,6 +91,7 @@ function goMore(to) {
                 <span class="logo">考</span>
                 <span class="title">考研助手</span>
               </div>
+              <span class="bar-title">{{ pageTitle }}</span>
               <nav class="nav">
                 <router-link to="/">首页</router-link>
                 <router-link to="/review">复习</router-link>
@@ -157,6 +168,7 @@ function goMore(to) {
 .avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #3C8DFF, #0E5FD8);
   color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
 .tabbar { display: none; }
+.bar-title { display: none; }
 
 /* 「更多」底部菜单（移动端） */
 .more-mask { display: none; }
@@ -170,6 +182,7 @@ function goMore(to) {
   .username span.u-name { display: none; }
   .right .ghost-btn { display: none; }  /* 退出在「更多」菜单里 */
   .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
+  .bar-title { display: block; flex: 1; text-align: center; font-size: 15px; font-weight: 600; color: var(--t1); white-space: nowrap; }
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;

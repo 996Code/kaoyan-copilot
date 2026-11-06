@@ -105,7 +105,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <!-- 总览 -->
     <template v-if="!active">
       <div class="kb-head">
-        <h1>知识速成卡</h1>
+        <h1 class="page-h2">知识速成卡</h1>
         <span class="sub">公式 / 技法 / 谬误 / 句型，标记熟悉度即进 FSRS 复习队列</span>
       </div>
       <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>

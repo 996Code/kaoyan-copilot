@@ -167,7 +167,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <div class="page">
-    <h2 style="margin:18px 0 4px">专项练习</h2>
+    <h2 class="page-h2" style="margin:18px 0 4px">专项练习</h2>
     <p class="muted pf-sub" style="margin:0 0 14px">按模块/年份抽题，即答即判，错题自动进错题记录</p>
 
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:16px">

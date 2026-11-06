@@ -121,6 +121,9 @@ textarea.essay:focus { border-color: var(--blue); }
   textarea.essay { font-size: 14px; min-height: 180px; }
   .anscard .cell { width: 30px; height: 28px; }
   .kbd-hint { display: none; }
+  /* 页面标题已上移至顶栏，页内标题行隐藏 */
+  .page-h2 { display: none !important; }
+  .page-h2 + p, .kb-head { display: none !important; }
   /* 触摸目标统一加高 */
   .page .n-button { min-height: 34px; }
   .page .n-button--tiny { min-height: 28px; }

@@ -134,7 +134,7 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <h2 style="margin:18px 0 14px">系统管理 <n-tag :type="llmState.llm_ready ? 'success' : 'error'" size="small">LLM {{ llmState.llm_ready ? '已就绪' : '未配置' }}</n-tag></h2>
+    <h2 class="page-h2" style="margin:18px 0 14px">系统管理 <n-tag :type="llmState.llm_ready ? 'success' : 'error'" size="small">LLM {{ llmState.llm_ready ? '已就绪' : '未配置' }}</n-tag></h2>
 
     <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
 

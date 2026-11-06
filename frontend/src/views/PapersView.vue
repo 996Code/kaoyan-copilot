@@ -19,7 +19,7 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <h2 style="margin:18px 0 4px">{{ names[subject] || subject }} · 历年真题整卷模考</h2>
+    <h2 class="page-h2" style="margin:18px 0 4px">{{ names[subject] || subject }} · 历年真题整卷模考</h2>
     <p class="muted" style="margin:0 0 16px">限时作答 · 客观题自动判分 · 断点续答（中途退出不丢答案）</p>
     <n-spin v-if="loading" style="display:block;margin:60px auto" />
     <div v-else class="paper-grid">

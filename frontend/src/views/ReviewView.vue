@@ -139,7 +139,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 <template>
   <div class="page">
     <div class="rv-head">
-      <h2 style="margin:18px 0 4px">复习中心</h2>
+      <h2 class="page-h2" style="margin:18px 0 4px">复习中心</h2>
       <p class="muted rv-sub" style="margin:0">到期卡片按 FSRS 记忆曲线调度；答对自动推迟，答错加快重现</p>
       <div class="filter-bar">
         <n-button size="small" :type="cardFilter === '' ? 'primary' : 'default'" @click="cardFilter = ''; load()">
