@@ -21,7 +21,7 @@ const isTextMat = computed(
 )
 
 function lookup(evt, word) {
-  if (!intensive.value || popup.value) return
+  if (!intensive.value) return
   const rect = (evt.target).closest('span, b, i')?.getBoundingClientRect() || evt.target.getBoundingClientRect()
   const clean = word.replace(/[^A-Za-z'-]/g, '')
   if (clean.length < 2) return
