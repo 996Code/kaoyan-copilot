@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { NButton, NCard, NEmpty, NSpin, NTag, useMessage } from 'naive-ui'
 import { api } from '../api'
+import { recall, remember } from '../memory'
 import { renderRich } from '../markdown'
 import QuestionItem from '../components/QuestionItem.vue'
 import GroupMaterial from '../components/GroupMaterial.vue'
@@ -28,7 +29,9 @@ async function load() {
     const data = await api('/api/review/queue?limit=40')
     cards.value = data.cards
     dueLeft.value = data.due_counts
-    idx.value = 0
+    // 恢复上次复习到的位置（队列变化时自动收敛到有效范围）
+    const resume = recall('rv_idx', 0) || 0
+    idx.value = Math.min(resume, Math.max(0, cards.value.length - 1))
     resetCard()
   } catch (e) {
     message.error(e.message)
@@ -55,13 +58,16 @@ function groupOf(c) {
 
 async function submitQuestion() {
   if (myAnswer.value == null || result.value) return
-  result.value = await api('/api/review/answer_question', {
-    method: 'POST',
-    body: { card_id: card.value.card_id, answer: myAnswer.value },
-  })
-  stats.done += 1
-  stats.questionDone += 1
-  if (result.value.correct) stats.correctCount += 1
+  try {
+    result.value = await api('/api/review/answer_question', {
+      method: 'POST',
+      body: { card_id: card.value.card_id, answer: myAnswer.value },
+    })
+    stats.done += 1
+    if (result.value.correct) stats.correctCount += 1
+  } catch (e) {
+    message.error(e.message)
+  }
 }
 
 async function rateWord(rating) {
@@ -84,6 +90,8 @@ async function rateWord(rating) {
 
 function next() {
   idx.value += 1
+  // 一轮刷完即清零记忆，下次从头开始
+  remember('rv_idx', idx.value < cards.value.length ? idx.value : 0)
   resetCard()
 }
 
@@ -171,7 +179,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             {{ result.correct ? '✓ 答对了，记忆已巩固' : '✗ 又错了，将尽快重现' }}
           </n-tag>
           <span v-if="!result.correct" style="margin-left:10px">
-            正确答案：<b style="color:#18a058">{{ result.correct_answer }}</b>
+            正确答案：<b style="color:var(--ok)">{{ result.correct_answer }}</b>
           </span>
           <span class="muted" style="margin-left:12px;font-size:12px">下次复习：{{ (result.new_due || '').replace('T', ' ').slice(5, 16) }}</span>
           <div v-if="result.analysis">
@@ -231,16 +239,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </template>
 
 <style scoped>
-.pstats { display:flex; gap:18px; font-size:13px; color:#7c849a; margin-bottom:10px; }
-.review-card { background:#fff; border:1px solid #eceef5; border-radius:14px; padding:18px 20px; }
+.pstats { display:flex; gap:18px; font-size:13px; color:var(--t3); margin-bottom:10px; }
+.review-card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
 .rc-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
-.feedback { margin-top:14px; padding-top:12px; border-top:1px dashed #e4e7f0; }
+.feedback { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line-soft); }
 .rv-actions { display:flex; justify-content:space-between; align-items:center; margin-top:16px; }
 .word-card { text-align:center; padding:34px 20px; }
 .word-front { padding:20px 0 26px; }
 .word { font-size:42px; font-weight:800; letter-spacing:.5px; }
 .word-back .definition { font-size:18px; margin:6px 0 12px; }
-.example { color:#575e72; font-size:14px; line-height:1.7; margin-bottom:18px; }
+.example { color:var(--t2); font-size:14px; line-height:1.7; margin-bottom:18px; }
 .word-rating { display:flex; gap:12px; justify-content:center; }
 .finish-card { text-align:center; padding:60px 0; }
 

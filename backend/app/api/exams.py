@@ -135,7 +135,7 @@ def history(
     )
     if paper_id:
         q = q.where(ExamRecord.paper_id == paper_id)
-    return [_record_dict(r) for r in session.scalars(q).limit(50).all()]
+    return [_record_dict(r) for r in session.scalars(q.limit(50)).all()]
 
 
 def _build_results(session: Session, rec: ExamRecord) -> dict:

@@ -1,5 +1,14 @@
 const TOKEN_KEY = 'kaoyan_token'
 
+// 全局错误提示（5xx / 网络错误在这里兜底提示；4xx 由页面自行处理业务含义）
+let globalMessage = null
+export function bindGlobalToast(messageApi) {
+  globalMessage = messageApi
+}
+function toastError(msg) {
+  if (globalMessage) globalMessage.error(msg)
+}
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY) || ''
 }
@@ -18,14 +27,20 @@ export class ApiError extends Error {
 }
 
 export async function api(path, { method = 'GET', body } = {}) {
-  const res = await fetch(path, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  let res
+  try {
+    res = await fetch(path, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch (e) {
+    toastError('网络异常：无法连接服务器')
+    throw new ApiError(0, '网络异常：无法连接服务器')
+  }
   if (res.status === 401) {
     clearToken()
     if (!location.hash.includes('/login')) location.hash = '#/login'
@@ -37,6 +52,7 @@ export async function api(path, { method = 'GET', body } = {}) {
       const data = await res.json()
       if (data.detail) msg = data.detail
     } catch { /* ignore */ }
+    if (res.status >= 500) toastError(`服务异常（${res.status}）：` + msg)
     throw new ApiError(res.status, msg)
   }
   return res.json()

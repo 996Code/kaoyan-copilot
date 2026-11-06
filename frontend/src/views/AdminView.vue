@@ -154,7 +154,7 @@ onMounted(load)
             <span class="muted">{{ fmt(u.created_at) }}</span>
             <span>{{ u.exams }}</span>
             <span>{{ u.answers }}</span>
-            <span :style="u.accuracy != null && u.accuracy < 60 ? 'color:#d03050' : ''">
+            <span :style="u.accuracy != null && u.accuracy < 60 ? 'color:var(--bad)' : ''">
               {{ u.accuracy != null ? u.accuracy + '%' : '—' }}
             </span>
             <span>{{ u.wrong_active }}</span>
@@ -222,19 +222,19 @@ onMounted(load)
 <style scoped>
 .tbl { display: grid; grid-template-columns: 1.3fr 1.2fr .5fr .6fr .7fr .7fr .7fr .7fr 1.2fr 1.3fr;
   gap: 6px; align-items: center; font-size: 13px; padding: 7px 4px; }
-.tbl.head { color: #7c849a; font-size: 12px; border-bottom: 1px solid #e8eaf1; }
-.tbl.row { border-bottom: 1px dashed #eceef4; }
+.tbl.head { color: var(--t3); font-size: 12px; border-bottom: 1px solid var(--line); }
+.tbl.row { border-bottom: 1px dashed var(--line-soft); }
 .tbl.row:last-child { border-bottom: none; }
 .ops { display: flex; gap: 6px; }
 .form-row { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
-.form-row label { font-size: 13px; color: #575e72; font-weight: 600; }
+.form-row label { font-size: 13px; color: var(--t2); font-weight: 600; }
 .test-result { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; }
-.test-result.ok { background: rgba(24,160,88,.08); color: #18a058; }
-.test-result.bad { background: rgba(208,48,80,.07); color: #d03050; }
+.test-result.ok { background: rgba(24,160,88,.08); color: var(--ok); }
+.test-result.bad { background: rgba(208,48,80,.07); color: var(--bad); }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .stat-card { border-radius: 12px; text-align: center; }
-.sc-label { font-size: 12.5px; color: #7c849a; }
-.sc-value { font-size: 26px; font-weight: 800; color: #2f6fed; font-variant-numeric: tabular-nums; }
+.sc-label { font-size: 12.5px; color: var(--t3); }
+.sc-value { font-size: 26px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
 @media (max-width: 768px) {
   .tbl { grid-template-columns: repeat(2, 1fr); font-size: 12.5px; }
   .tbl.head { display: none; }

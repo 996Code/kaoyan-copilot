@@ -1,90 +1,120 @@
-:root {
-  --page-max: 1180px;
-}
+/* 全局组件样式层：消费 tokens.css 的变量。页面级样式只做布局，不写死色值。 */
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--t1);
   -webkit-font-smoothing: antialiased;
 }
 #app { min-height: 100vh; }
 
+.page { max-width: 1240px; margin: 0 auto; padding: 20px 24px 60px; }
+.muted { color: var(--t3); }
+.section-title { font-size: 13px; color: var(--t2); margin: 14px 0 6px; font-weight: 600; }
+
+/* 卡片 */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.panel-h {
+  display: flex; align-items: center; padding: 14px 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.panel-h b { font-size: 15px; }
+.panel-h .more { margin-left: auto; color: var(--t3); font-size: 12.5px; text-decoration: none; }
+
+/* 标签（钉钉式小圆角状态标签） */
+.tag {
+  display: inline-block; padding: 1px 8px; border-radius: var(--r-tag);
+  font-size: 12px; font-weight: 600; line-height: 1.6;
+}
+.tag.b { background: var(--blue-bg); color: var(--blue-deep); }
+.tag.g { background: var(--ok-bg); color: var(--ok-ink); }
+.tag.o { background: var(--warn-bg); color: var(--warn-ink); }
+.tag.r { background: var(--bad-bg); color: var(--bad-ink); }
+
 /* 题面富文本（markdown+latex+svg） */
-.rich { line-height: 1.75; font-size: 15px; word-break: break-word; }
+.rich { line-height: 1.75; font-size: 15px; word-break: break-word; color: var(--t1); }
 .rich p { margin: 0.35em 0; }
 .rich blockquote {
-  margin: 0.5em 0; padding: 6px 14px; border-left: 3px solid #d0d4dc;
-  background: rgba(128, 128, 128, 0.06); border-radius: 4px; white-space: pre-wrap;
+  margin: 0.5em 0; padding: 6px 14px; border-left: 3px solid var(--line);
+  background: rgba(128, 128, 128, 0.05); border-radius: 4px; white-space: pre-wrap;
 }
 .rich table { border-collapse: collapse; margin: 0.5em 0; font-size: 13.5px; }
-.rich th, .rich td { border: 1px solid #d9dce3; padding: 4px 10px; }
+.rich th, .rich td { border: 1px solid var(--line); padding: 4px 10px; }
 .rich svg { max-width: 100%; height: auto; }
 .rich img { max-width: 100%; }
-.rich code { background: rgba(128,128,128,.12); padding: 1px 5px; border-radius: 4px; }
+.rich code { background: var(--line-soft); padding: 1px 5px; border-radius: 4px; }
+
+/* 选项行 */
+.opt-row {
+  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 7px; margin: 7px 0; cursor: pointer;
+  transition: border-color .12s ease, background .12s ease; background: transparent;
+}
+.opt-row:hover { border-color: var(--blue-line); background: #FAFCFF; }
+.opt-row.selected { border-color: var(--blue); background: var(--blue-bg); }
+.opt-row .opt-key {
+  flex: none; width: 24px; height: 24px; border-radius: var(--r-btn);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; border: 1px solid #C6CCDB; color: var(--t2);
+}
+.opt-row.selected .opt-key { background: var(--blue); border-color: var(--blue); color: #fff; }
+.opt-row.correct { border-color: var(--ok); background: var(--ok-bg); }
+.opt-row.correct .opt-key { background: var(--ok); border-color: var(--ok); color: #fff; }
+.opt-row.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.opt-row.wrong .opt-key { background: var(--bad); border-color: var(--bad); color: #fff; }
+
+/* 答题卡 */
+.anscard { display: flex; flex-wrap: wrap; gap: 5px; }
+.anscard .cell {
+  width: 30px; height: 27px; border-radius: var(--r-cell); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+  cursor: pointer; user-select: none; color: var(--t2); background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.anscard .cell.answered { background: var(--blue); border-color: var(--blue); color: #fff; }
+.anscard .cell.current { outline: 2px solid var(--warn); outline-offset: 1px; font-weight: 700; }
 
 /* 完形空位 */
 .blank-chip {
   display: inline-block; min-width: 2.6em; text-align: center; margin: 0 3px;
-  padding: 0 8px; border-bottom: 2px solid #7a90d0; color: #3452b4; font-weight: 600;
-  cursor: pointer; border-radius: 2px;
+  padding: 0 8px; border-bottom: 2px solid var(--blue-line); color: var(--blue-deep);
+  font-weight: 600; cursor: pointer; border-radius: 2px;
 }
-.blank-chip.is-answered { background: #e8f0ff; border-bottom-color: #2f6fed; }
-.blank-chip.is-current { outline: 2px solid #2f6fed; outline-offset: 1px; }
+.blank-chip.is-answered { background: var(--blue-bg); border-bottom-color: var(--blue); }
+.blank-chip.is-current { outline: 2px solid var(--blue); outline-offset: 1px; }
 
-/* 选项 */
-.opt-row {
-  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
-  border: 1px solid #e2e6ee; border-radius: 10px; margin: 7px 0; cursor: pointer;
-  transition: all .12s ease; background: transparent;
-}
-.opt-row:hover { border-color: #a8bdfa; background: rgba(94,124,224,.05); }
-.opt-row.selected { border-color: #2f6fed; background: rgba(47,111,237,.09); }
-.opt-row .opt-key {
-  flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex;
-  align-items: center; justify-content: center; font-weight: 600; font-size: 13px;
-  border: 1.5px solid #c4cadb; color: inherit;
-}
-.opt-row.selected .opt-key { background: #2f6fed; border-color: #2f6fed; color: #fff; }
-.opt-row.correct { border-color: #18a058; background: rgba(24,160,88,.10); }
-.opt-row.correct .opt-key { background: #18a058; border-color: #18a058; color: #fff; }
-.opt-row.wrong { border-color: #d03050; background: rgba(208,48,80,.08); }
-.opt-row.wrong .opt-key { background: #d03050; border-color: #d03050; color: #fff; }
-
-/* 答题卡 */
-.anscard { display: flex; flex-wrap: wrap; gap: 6px; }
-.anscard .cell {
-  width: 34px; height: 30px; border-radius: 7px; border: 1px solid #d7dbe6;
-  display: flex; align-items: center; justify-content: center; font-size: 12.5px;
-  cursor: pointer; user-select: none; background: transparent;
-}
-.anscard .cell.answered { background: #2f6fed; border-color: #2f6fed; color: #fff; }
-.anscard .cell.current { outline: 2px solid #ff9a2e; outline-offset: 1px; font-weight: 700; }
-
-.kbd-hint { font-size: 12px; color: #9aa1b2; }
+.kbd-hint { font-size: 12px; color: var(--t3); }
 .kbd-hint kbd {
-  border: 1px solid #d3d7e2; border-bottom-width: 2px; border-radius: 4px;
-  padding: 0 5px; font-size: 11px; background: #f4f6fa; font-family: inherit;
+  border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px;
+  padding: 0 5px; font-size: 11px; background: var(--card); font-family: inherit;
 }
 textarea.essay {
-  width: 100%; min-height: 220px; border: 1px solid #d9dee9; border-radius: 10px;
+  width: 100%; min-height: 220px; border: 1px solid var(--line); border-radius: 7px;
   padding: 12px 14px; font-size: 15px; line-height: 1.8; resize: vertical; outline: none;
+  font-family: inherit; color: var(--t1);
 }
-textarea.essay:focus { border-color: #2f6fed; }
+textarea.essay:focus { border-color: var(--blue); }
 
 /* 阅读双栏 */
 .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
 @media (max-width: 980px) { .split { grid-template-columns: 1fr; } }
 
-.page { max-width: var(--page-max); margin: 0 auto; padding: 18px 20px 60px; }
-.muted { color: #8b93a7; }
-.section-title { font-size: 13px; color: #7c849a; margin: 14px 0 6px; font-weight: 600; }
+/* 复用：数据行（模块统计等） */
+.stat-bar { height: 6px; border-radius: 3px; background: var(--line-soft); overflow: hidden; }
+.stat-bar i { display: block; height: 100%; border-radius: 3px; }
 
 @media (max-width: 768px) {
   .page { padding: 12px 14px 40px; }
   .rich { font-size: 14.5px; line-height: 1.7; }
   .opt-row { padding: 9px 10px; gap: 8px; }
-  .opt-row .opt-key { width: 24px; height: 24px; font-size: 12px; }
+  .opt-row .opt-key { width: 22px; height: 22px; font-size: 12px; }
   textarea.essay { font-size: 14px; min-height: 180px; }
   .anscard .cell { width: 30px; height: 28px; }
   .kbd-hint { display: none; }

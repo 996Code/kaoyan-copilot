@@ -157,7 +157,7 @@ const counts = computed(() => {
           <div v-for="s in sectionStats" :key="s.name" class="sec-row">
             <span>{{ s.name }}</span>
             <span class="bold">{{ s.earned }} / {{ s.total }}</span>
-            <span :style="s.wrong ? 'color:#d03050' : ''">{{ s.wrong }}</span>
+            <span :style="s.wrong ? 'color:var(--bad)' : ''">{{ s.wrong }}</span>
             <span class="muted">{{ s.subjective }}</span>
           </div>
         </div>
@@ -257,26 +257,26 @@ const counts = computed(() => {
 .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .score-card { border-radius: 14px; text-align: center; }
 .score-card.main { background: linear-gradient(135deg, rgba(47,111,237,.12), rgba(106,92,255,.08)); }
-.sc-label { font-size: 12.5px; color: #7c849a; }
-.sc-value { font-size: 30px; font-weight: 800; color: #2f6fed; font-variant-numeric: tabular-nums; }
-.sc-value small { font-size: 14px; color: #8b93a7; font-weight: 500; }
+.sc-label { font-size: 12.5px; color: var(--t3); }
+.sc-value { font-size: 30px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.sc-value small { font-size: 14px; color: var(--t3); font-weight: 500; }
 .sec-table { font-size: 14px; }
-.sec-row { display: grid; grid-template-columns: 2fr 1fr .6fr .8fr; padding: 7px 4px; border-bottom: 1px dashed #eceef4; }
+.sec-row { display: grid; grid-template-columns: 2fr 1fr .6fr .8fr; padding: 7px 4px; border-bottom: 1px dashed var(--line-soft); }
 .sec-row:last-child { border-bottom: none; }
-.sec-head-row { color: #7c849a; font-size: 12.5px; }
+.sec-head-row { color: var(--t3); font-size: 12.5px; }
 .filter-bar { display: flex; gap: 8px; margin: 4px 0 14px; }
-.review-card { background: #fff; border: 1px solid #eceef5; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+.review-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
 .rc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .verdict { margin-top: 10px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; }
-.ok { color: #18a058; } .bad { color: #d03050; }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
 .analysis { margin-top: 10px; }
 .ai-grade { margin-top: 10px; }
 .grade-card { margin-top: 8px; border: 1px solid rgba(240,160,32,.35); background: rgba(240,160,32,.06); border-radius: 10px; padding: 12px 14px; }
 .grade-score { font-size: 15px; margin-bottom: 8px; }
-.grade-score b { font-size: 22px; color: #d06000; }
+.grade-score b { font-size: 22px; color: var(--warn-ink); }
 .grade-dims { display: grid; gap: 4px; }
 .dim-row { display: grid; grid-template-columns: 110px 70px 1fr; gap: 10px; font-size: 13.5px; align-items: baseline; }
 .dim-name { font-weight: 600; }
-.dim-score { color: #d06000; font-variant-numeric: tabular-nums; }
+.dim-score { color: var(--warn-ink); font-variant-numeric: tabular-nums; }
 .grade-sug ul { margin: 4px 0; padding-left: 20px; }
 </style>

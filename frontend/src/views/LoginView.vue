@@ -79,28 +79,28 @@ async function submit() {
   padding: 24px;
 }
 .login-left { max-width: 460px; }
-.big-num { font-size: 88px; font-weight: 900; line-height: 1; color: #2f6fed;
+.big-num { font-size: 88px; font-weight: 900; line-height: 1; color: var(--blue);
   letter-spacing: -2px; }
-.big-num span { font-size: 24px; margin-left: 6px; color: #7c849a; font-weight: 600; }
+.big-num span { font-size: 24px; margin-left: 6px; color: var(--t3); font-weight: 600; }
 .slogan h1 { margin: 10px 0 8px; font-size: 34px; letter-spacing: 1px; }
-.slogan p { margin: 0; color: #7c849a; font-size: 14.5px; }
+.slogan p { margin: 0; color: var(--t3); font-size: 14.5px; }
 .features { display: flex; gap: 14px; margin-top: 34px; }
 .feat {
   flex: 1; background: rgba(255,255,255,.75); backdrop-filter: blur(6px);
   border: 1px solid rgba(47,111,237,.14); border-radius: 14px; padding: 14px;
-  font-size: 12.5px; color: #575e72; line-height: 1.65;
+  font-size: 12.5px; color: var(--t2); line-height: 1.65;
 }
 .feat b { font-size: 22px; display: block; margin-bottom: 6px; }
 .login-card { width: min(360px, calc(100vw - 36px)); border-radius: 18px;
   box-shadow: 0 16px 48px rgba(30,41,80,.12); background: #fff; padding: 30px 28px;
-  border: 1px solid #eef0f6; }
+  border: 1px solid var(--line-soft); }
 .login-head { text-align: center; margin-bottom: 18px; }
-.logo { width: 48px; height: 48px; margin: 0 auto 8px; border-radius: 14px; background: #2f6fed;
+.logo { width: 48px; height: 48px; margin: 0 auto 8px; border-radius: 14px; background: var(--blue);
   color: #fff; font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 h2 { margin: 4px 0; }
-.error { color: #d03050; font-size: 13px; margin-top: 10px; text-align: center; }
-.switch-mode { text-align: center; margin-top: 14px; font-size: 13px; color: #8b93a7; }
-.switch-mode a { color: #2f6fed; cursor: pointer; }
+.error { color: var(--bad); font-size: 13px; margin-top: 10px; text-align: center; }
+.switch-mode { text-align: center; margin-top: 14px; font-size: 13px; color: var(--t3); }
+.switch-mode a { color: var(--blue); cursor: pointer; }
 
 @media (max-width: 860px) {
   .login-wrap { flex-direction: column; gap: 28px; padding: 40px 20px; justify-content: center; }

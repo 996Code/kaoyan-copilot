@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   NButton, NCard, NSelect, NSpin, NTag, useMessage,
 } from 'naive-ui'
 import { api } from '../api'
+import { recall, remember } from '../memory'
 import { renderRich } from '../markdown'
 import QuestionItem from '../components/QuestionItem.vue'
 import GroupMaterial from '../components/GroupMaterial.vue'
@@ -93,6 +94,10 @@ function next() {
   checked.value = null
 }
 
+watch([subject, moduleCode, year, count], () => {
+  remember('pf_state', { subject: subject.value, module: moduleCode.value, year: year.value, count: count.value })
+})
+
 function onKey(e) {
   const tag = (e.target.tagName || '').toLowerCase()
   if (tag === 'textarea' || tag === 'input') return
@@ -118,11 +123,18 @@ onMounted(async () => {
   const qs = new URLSearchParams((location.hash.split('?')[1] || ''))
   const qsSubject = qs.get('subject')
   const qsModule = qs.get('module')
-  const preset = subjects.value.find((s) => s.code === qsSubject) || subjects.value[0]
+  const mem = recall('pf_state', {}) || {}
+  const qsOverride = qsSubject != null
+  const preset = subjects.value.find((s) => s.code === qsSubject)
+    || subjects.value.find((s) => s.code === mem.subject)
+    || subjects.value[0]
   if (preset) {
     subject.value = preset.code
-    moduleCode.value = preset.modules.find((m) => m.code === qsModule)?.code || preset.modules[0]?.code
+    const wantModule = qsModule || (qsOverride ? null : mem.module)
+    moduleCode.value = preset.modules.find((m) => m.code === wantModule)?.code || preset.modules[0]?.code
   }
+  if (!qsOverride && mem.year !== undefined) year.value = mem.year
+  if (!qsOverride && mem.count) count.value = mem.count
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
@@ -166,7 +178,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
               {{ checked.correct === true ? '✓ 回答正确' : checked.correct === false ? '✗ 回答错误' : '主观题，待 AI 批改' }}
             </n-tag>
             <span v-if="checked.correct === false" style="margin-left:10px">
-              正确答案：<b style="color:#18a058">{{ checked.correct_answer }}</b>
+              正确答案：<b style="color:var(--ok)">{{ checked.correct_answer }}</b>
             </span>
             <n-tag v-if="checked.disputed" type="warning" size="small" style="margin-left:10px">该题答案存在版本争议</n-tag>
           </div>
@@ -194,9 +206,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <style scoped>
 .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.pstats { display: flex; gap: 18px; font-size: 13px; color: #7c849a; margin-bottom: 10px; }
-.practice-card { background: #fff; border: 1px solid #eceef5; border-radius: 14px; padding: 18px 20px; }
-.feedback { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e4e7f0; }
+.pstats { display: flex; gap: 18px; font-size: 13px; color: var(--t3); margin-bottom: 10px; }
+.practice-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.feedback { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-soft); }
 .fb-line { display: flex; align-items: center; margin-bottom: 8px; }
 .p-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
 </style>

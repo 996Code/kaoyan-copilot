@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   NButton, NCard, NEmpty, NSelect, NSpin, NTag, useMessage,
 } from 'naive-ui'
 import { api } from '../api'
+import { recall, remember } from '../memory'
 import { renderRich } from '../markdown'
 import QuestionItem from '../components/QuestionItem.vue'
 import GroupMaterial from '../components/GroupMaterial.vue'
@@ -15,22 +16,28 @@ const subjects = [
   { code: 'gz199', name: '199 管综' },
   { code: 'en2', name: '英语二' },
 ]
-const subject = ref('gz199')
-const showMastered = ref(false)
-const moduleFilter = ref(null)
+// 恢复上次的筛选与浏览位置（刷新/重进不再从头来）
+const saved = recall('wb_state', {}) || {}
+const subject = ref(saved.subject || 'gz199')
+const showMastered = ref(saved.showMastered || false)
+const moduleFilter = ref(saved.module ?? null)
 
 const modules = ref([])
 const items = ref([])
 const loading = ref(false)
 const openAnalysis = ref({}) // qid -> bool
+const visibleCount = ref(saved.visibleCount || 30)
 
 const moduleOptions = computed(() => [
   { label: '全部模块', value: null },
   ...modules.value.map((m) => ({ label: m.name, value: m.code })),
 ])
 
+const visibleItems = computed(() => items.value.slice(0, visibleCount.value))
+
 const activeStats = ref({})
 
+let restoredScroll = false
 async function load() {
   loading.value = true
   try {
@@ -42,10 +49,34 @@ async function load() {
     message.error(e.message)
   } finally {
     loading.value = false
+    if (!restoredScroll && saved.scrollTop) {
+      requestAnimationFrame(() => window.scrollTo({ top: saved.scrollTop }))
+      restoredScroll = true
+    }
   }
 }
 
-watch([subject, showMastered, moduleFilter], load)
+function persist() {
+  remember('wb_state', {
+    subject: subject.value,
+    showMastered: showMastered.value,
+    module: moduleFilter.value,
+    visibleCount: visibleCount.value,
+    scrollTop: window.scrollY,
+  })
+}
+
+watch([subject, showMastered, moduleFilter], () => {
+  visibleCount.value = 30
+  window.scrollTo({ top: 0 })
+  load()
+})
+const onScroll = () => persist()
+window.addEventListener('scroll', onScroll, { passive: true })
+onBeforeUnmount(() => {
+  persist()
+  window.removeEventListener('scroll', onScroll)
+})
 
 async function toggleMastered(item) {
   const q = item.question
@@ -123,7 +154,7 @@ onMounted(async () => {
     <n-empty v-else-if="!items.length" description="这个视图下没有错题——要么你很强，要么还没开始做题 😏"
       style="margin:60px 0" />
 
-    <div v-for="item in items" :key="item.question.id" class="wb-card">
+    <div v-for="item in visibleItems" :key="item.question.id" class="wb-card">
       <div class="wb-meta">
         <n-tag type="error" size="small">错 {{ item.wrong_count }} 次</n-tag>
         <n-tag v-if="item.question.disputed" type="warning" size="small">答案存在版本争议</n-tag>
@@ -157,16 +188,23 @@ onMounted(async () => {
 
       <AiPanel :endpoint="explainEndpoint(item)" />
     </div>
+
+    <div v-if="items.length > visibleCount" class="load-more">
+      <n-button @click="visibleCount += 30; persist()">
+        加载更多（{{ visibleItems.length }} / {{ items.length }}）
+      </n-button>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .wb-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .stat-chip { font-size: 12.5px; }
-.wb-card { background: #fff; border: 1px solid #eceef5; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+.wb-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
 .wb-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .meta-text { font-size: 12.5px; }
 .verdict { margin-top: 8px; font-size: 14px; }
-.ok { color: #18a058; } .bad { color: #d03050; }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
 .toggle { cursor: pointer; user-select: none; }
+.load-more { text-align: center; padding: 16px 0 8px; }
 </style>

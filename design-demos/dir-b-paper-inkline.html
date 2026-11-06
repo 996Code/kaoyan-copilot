@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方向 B · 纸白墨线</title>
+<style>
+:root{
+  --paper:#FFFFFF; --ink:#1A1D24; --ink2:#4A4F5C; --ink3:#8A8F9C;
+  --line:#E5E6EB; --line-hi:#D4D6DE;
+  --accent:#0E42D2; --accent-ink:#0B2E8F;
+  --ok:#0A7A4A; --warn:#9A6200; --bad:#C33135;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--paper);color:var(--ink);font-size:14.5px;-webkit-font-smoothing:antialiased}
+.proto-bar{position:sticky;top:0;z-index:50;background:var(--ink);color:#E7E9EF;
+  display:flex;align-items:center;gap:14px;padding:9px 20px;font-size:13px}
+.proto-bar b{color:#9DB8FF}
+.proto-bar button{border:1px solid #41465633;background:transparent;color:#B9BECC;
+  padding:4px 14px;border-radius:4px;font-size:13px;cursor:pointer}
+.proto-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.screen{display:none;max-width:1080px;margin:0 auto;padding:0 28px 70px}
+.screen.on{display:block}
+
+/* 顶栏：细线式 */
+.topbar{display:flex;align-items:center;height:58px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand .name{font-size:17px;font-weight:800;letter-spacing:.5px}
+.brand .name em{font-style:normal;color:var(--accent)}
+.topnav{display:flex;margin-left:36px;gap:26px}
+.topnav a{color:var(--ink2);text-decoration:none;font-size:14px;padding:19px 0 17px;
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.topnav a.on{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.topnav a:hover{color:var(--ink)}
+.examdate{margin-left:auto;font-size:13px;color:var(--ink3)}
+.examdate b{color:var(--accent);font-size:17px;font-variant-numeric:tabular-nums;font-weight:800}
+.who{margin-left:22px;font-size:13.5px;color:var(--ink2);display:flex;align-items:center;gap:7px}
+.who .dot{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--ink);display:flex;
+  align-items:center;justify-content:center;font-size:11.5px;font-weight:700}
+
+/* 看板：报表式 */
+.date-line{display:flex;align-items:baseline;gap:14px;padding:6px 0 22px}
+.date-line h1{font-size:23px;font-weight:800;letter-spacing:.5px}
+.date-line span{color:var(--ink3);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line-hi);
+  border-bottom:1px solid var(--line-hi);margin-bottom:30px}
+.kpi{padding:20px 22px 18px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:none}
+.kpi .v{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1.1}
+.kpi .v small{font-size:14px;color:var(--ink3);font-weight:500;margin-left:2px}
+.kpi .l{color:var(--ink2);font-size:13px;margin-top:6px}
+.kpi .go{color:var(--accent);font-size:13px;margin-top:10px;display:inline-block;
+  text-decoration:none;border-bottom:1px solid #B9C6F2;padding-bottom:1px}
+.kpi.hot .v{color:var(--bad)}
+.sect{display:flex;align-items:baseline;gap:12px;margin:30px 0 4px}
+.sect h2{font-size:16.5px;font-weight:800}
+.sect .note{color:var(--ink3);font-size:12.5px}
+.sect .all{margin-left:auto;font-size:13px;color:var(--ink2);text-decoration:none}
+/* 模块：纯表格线 */
+.mods{width:100%;border-collapse:collapse;font-size:14px}
+.mods td{padding:14px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.mods tr:hover td{background:#FAFBFF}
+.mods .mname{font-weight:600}
+.mods .mname span{color:var(--ink3);font-weight:400;font-size:12.5px;margin-left:8px}
+.mods .pct{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;width:70px}
+.mods .track{width:220px;height:3px;background:var(--line);border-radius:0;overflow:hidden}
+.mods .track i{display:block;height:100%;background:var(--ink)}
+.mods .track i.warn{background:var(--warn)} .mods .track i.bad{background:var(--bad)}
+.mods .cnt{color:var(--ink3);font-size:12.5px;width:80px;text-align:right}
+.two{display:grid;grid-template-columns:1.5fr 1fr;gap:0;border-top:1px solid var(--line-hi)}
+.two>div:first-child{border-right:1px solid var(--line);padding-right:28px}
+.two>div:last-child{padding-left:28px}
+/* 周：极简线 */
+.week{display:flex;gap:0;margin-top:8px}
+.wc{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px}
+.wc .bar{width:14px;background:var(--line);height:110px;position:relative}
+.wc .bar i{position:absolute;left:0;right:0;bottom:0;background:var(--ink)}
+.wc .bar i.lo{background:var(--bad)}
+.wc .v{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.wc .d{font-size:11px;color:var(--ink3)}
+/* 模考行 */
+.mocks .row{display:flex;align-items:baseline;gap:14px;padding:15px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.mocks .row .y{font-weight:800;font-size:15px;color:var(--accent);font-variant-numeric:tabular-nums;width:46px}
+.mocks .row .t b{font-weight:600}
+.mocks .row .t span{color:var(--ink3);font-size:12.5px;margin-left:8px}
+.mocks .row .act{margin-left:auto;font-size:13px;color:var(--accent);text-decoration:none;
+  border-bottom:1px solid #B9C6F2;padding-bottom:1px}
+/* 按钮：文字式 */
+.tbtn{background:none;border:1.5px solid var(--ink);color:var(--ink);padding:8px 22px;
+  font-size:13.5px;font-weight:600;cursor:pointer;border-radius:0}
+.tbtn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* 模考 */
+.exam-head{display:flex;align-items:baseline;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--line-hi);margin-bottom:22px}
+.exam-head h2{font-size:18px;font-weight:800}
+.exam-head .sec{color:var(--ink3);font-size:13px}
+.exam-head .meta{margin-left:auto;font-size:12.5px;color:var(--ink3)}
+.clock{font-variant-numeric:tabular-nums;font-size:21px;font-weight:800;margin-left:18px}
+.clock.low{color:var(--bad)}
+.exam-grid{display:grid;grid-template-columns:1fr 260px;gap:34px}
+.mat{border-left:2px solid var(--ink);padding:2px 0 2px 16px;color:var(--ink2);
+  line-height:1.9;font-size:14.5px;margin-bottom:24px}
+.q .stem{font-size:15px;line-height:1.9}
+.q .stem b{color:var(--accent)}
+.opts{margin-top:14px}
+.opt{display:flex;gap:12px;align-items:baseline;padding:12px 6px;border-bottom:1px solid var(--line);
+  cursor:pointer;font-size:14.5px}
+.opt:hover{background:#FAFBFF}
+.opt .k{color:var(--ink3);font-weight:700;width:16px}
+.opt.sel .k{color:var(--accent)}
+.opt.sel{background:#F4F7FF;border-bottom-color:var(--accent)}
+.qnav{display:flex;justify-content:space-between;margin-top:22px}
+.anside{border-left:1px solid var(--line);padding-left:26px}
+.anside h4{font-size:13.5px;font-weight:800;margin-bottom:6px}
+.anside .grp{color:var(--ink3);font-size:12px;margin:12px 0 6px}
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+.cell{width:28px;height:24px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--ink2);cursor:pointer;font-variant-numeric:tabular-nums;
+  border-bottom:1.5px solid var(--line)}
+.cell.done{border-bottom-color:var(--accent);color:var(--accent);font-weight:800}
+.cell.cur{background:var(--ink);color:#fff;border-bottom-color:var(--ink)}
+
+/* 报告 */
+.rep-top{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line-hi);
+  border-bottom:1px solid var(--line-hi);margin-bottom:26px}
+.rep-top .rc{padding:20px 22px;border-right:1px solid var(--line)}
+.rep-top .rc:last-child{border-right:none}
+.rep-top .v{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.rep-top .v small{font-size:13px;color:var(--ink3);font-weight:500}
+.rep-top .v.acc{color:var(--accent)}
+.rep-top .l{color:var(--ink2);font-size:13px;margin-top:5px}
+.wrow{border-bottom:1px solid var(--line);padding:18px 0}
+.wrow .wh{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--ink3);margin-bottom:8px}
+.wrow .wh b{color:var(--bad);font-size:13.5px}
+.wrow .stem{line-height:1.8;font-size:14.5px}
+.wrow .stem b{color:var(--accent)}
+.pair{display:flex;gap:22px;margin-top:10px;font-size:13.5px;color:var(--ink2)}
+.pair b.you{color:var(--bad)} .pair b.ok{color:var(--ok)}
+.ai-link{margin-top:12px;font-size:13.5px;color:var(--accent);text-decoration:none;
+  border-bottom:1px solid #B9C6F2;padding-bottom:1px}
+
+@media (max-width:820px){
+  .kpis,.rep-top{grid-template-columns:1fr 1fr}
+  .kpis .kpi:nth-child(2){border-right:none}
+  .two{grid-template-columns:1fr}
+  .two>div:first-child{border-right:none;padding-right:0;margin-bottom:24px}
+  .two>div:last-child{padding-left:0}
+  .exam-grid{grid-template-columns:1fr}
+  .anside{border-left:none;padding-left:0;border-top:1px solid var(--line);padding-top:18px}
+  .topnav{display:none}
+  .screen{padding:0 16px 50px}
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <b>方向 B · 纸白墨线</b><span style="color:#7A7F92">钉钉简约的极简诠释：无底色无阴影，线与排印驱动</span>
+  <span style="flex:1"></span>
+  <button data-s="dash" class="on">今日看板</button>
+  <button data-s="exam">整卷模考</button>
+  <button data-s="report">成绩报告</button>
+</div>
+
+<!-- 看板 -->
+<div class="screen on" id="s-dash">
+  <div class="topbar">
+    <div class="brand"><div class="name">考研<em>助手</em></div></div>
+    <nav class="topnav">
+      <a class="on" href="#">今日</a><a href="#">复习</a><a href="#">单词</a>
+      <a href="#">练习</a><a href="#">错题</a><a href="#">真题</a><a href="#">管理</a>
+    </nav>
+    <div class="examdate">距初试 <b>43</b> 天</div>
+    <div class="who"><span class="dot">A</span>admin</div>
+  </div>
+
+  <div class="date-line"><h1>今日</h1><span>2026-11-06 星期五 · 目标 管综 120 / 英二 55</span></div>
+
+  <div class="kpis">
+    <div class="kpi hot"><div class="v">12</div><div class="l">复习到期 · 错题8 单词4</div><a class="go" href="#">去复习 →</a></div>
+    <div class="kpi"><div class="v">50<small>词</small></div><div class="l">待背新词 · 已学 372/5530</div><a class="go" href="#">去背词 →</a></div>
+    <div class="kpi"><div class="v">42<small>%</small></div><div class="l">最弱模块 · 数学</div><a class="go" href="#">去强化 →</a></div>
+    <div class="kpi"><div class="v">1<small>/2</small></div><div class="l">本周模考进度</div><a class="go" href="#">看建议 →</a></div>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="sect"><h2>模块正确率</h2><span class="note">按近期作答统计</span><a class="all" href="#">全部 ›</a></div>
+      <table class="mods" style="width:100%;border-collapse:collapse">
+        <tr><td class="mname">数学<span>管综</span></td><td class="pct" style="color:var(--bad)">42%</td>
+          <td><div class="track"><i class="bad" style="width:42%"></i></div></td><td class="cnt">96 题</td></tr>
+        <tr><td class="mname">完形填空<span>英二</span></td><td class="pct" style="color:var(--warn)">55%</td>
+          <td><div class="track"><i class="warn" style="width:55%"></i></div></td><td class="cnt">40 题</td></tr>
+        <tr><td class="mname">逻辑推理<span>管综</span></td><td class="pct">68%</td>
+          <td><div class="track"><i style="width:68%"></i></div></td><td class="cnt">120 题</td></tr>
+        <tr><td class="mname">阅读理解<span>英二</span></td><td class="pct">71%</td>
+          <td><div class="track"><i style="width:71%"></i></div></td><td class="cnt">80 题</td></tr>
+        <tr><td class="mname">翻译<span>英二</span></td><td class="pct" style="color:var(--ink3)">—</td>
+          <td><div class="track"><i style="width:0"></i></div></td><td class="cnt">未开始</td></tr>
+      </table>
+      <div class="sect"><h2>近 7 天正确率</h2></div>
+      <div class="week">
+        <div class="wc"><span class="v">52%</span><div class="bar"><i style="height:52%"></i></div><span class="d">10-31</span></div>
+        <div class="wc"><span class="v">61%</span><div class="bar"><i style="height:61%"></i></div><span class="d">11-01</span></div>
+        <div class="wc"><span class="v">48%</span><div class="bar"><i class="lo" style="height:48%"></i></div><span class="d">11-02</span></div>
+        <div class="wc"><span class="v">66%</span><div class="bar"><i style="height:66%"></i></div><span class="d">11-03</span></div>
+        <div class="wc"><span class="v">59%</span><div class="bar"><i style="height:59%"></i></div><span class="d">11-04</span></div>
+        <div class="wc"><span class="v">71%</span><div class="bar"><i style="height:71%"></i></div><span class="d">11-05</span></div>
+        <div class="wc"><span class="v">63%</span><div class="bar"><i style="height:63%"></i></div><span class="d">11-06</span></div>
+      </div>
+    </div>
+    <div class="mocks">
+      <div class="sect"><h2>模考建议</h2><span class="note">各科最新未考</span></div>
+      <div class="row"><span class="y">2025</span><span class="t"><b>英语（二）真题</b><span>100分 · 180分钟</span></span><a class="act" href="#">开始模考</a></div>
+      <div class="row"><span class="y">2024</span><span class="t"><b>199 管综真题</b><span>200分 · 180分钟</span></span><a class="act" href="#">查看</a></div>
+      <div class="row"><span class="y">2023</span><span class="t"><b>英语（二）真题</b><span>100分 · 180分钟</span></span><a class="act" href="#">查看</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- 模考 -->
+<div class="screen" id="s-exam">
+  <div class="exam-head">
+    <h2>2024 年 199 管综真题</h2><span class="sec">三、逻辑推理 · 第 46 题</span>
+    <span class="meta">已答 32/57 · 自动保存 22:14</span>
+    <span class="clock">02:41:36</span>
+  </div>
+  <div class="exam-grid">
+    <div>
+      <div class="mat">某公司年度审计发现，若采购流程存在漏洞，则财务报表必然出现异常。本年度财务报表未出现异常，因此采购流程不存在漏洞。（第 46～47 题共用）</div>
+      <div class="q">
+        <div class="stem"><b>46.</b>　以下哪项与上述论证中的推理结构最为类似？</div>
+        <div class="opts">
+          <div class="opt"><span class="k">A</span>如果天气晴朗，运动会就如期举行。运动会如期举行了，所以天气晴朗</div>
+          <div class="opt sel"><span class="k">B</span>如果限行政策生效，车流必然下降。车流未下降，所以限行政策未生效</div>
+          <div class="opt"><span class="k">C</span>只有投入研发，产品才有竞争力。产品有竞争力，所以投入了研发</div>
+          <div class="opt"><span class="k">D</span>价格上涨要么源于成本，要么源于需求。成本未变，所以源于需求</div>
+          <div class="opt"><span class="k">E</span>除非通过认证，否则不能上市。已通过认证，所以可以上市</div>
+        </div>
+        <div class="qnav">
+          <button class="tbtn">‹ 上一题</button>
+          <span style="color:var(--ink3);font-size:12px;align-self:center">A–E 选题 · ←→ 切题</span>
+          <button class="tbtn pri">下一题 ›</button>
+        </div>
+      </div>
+    </div>
+    <div class="anside">
+      <h4>答题卡</h4>
+      <div class="grp">一、问题求解 1–15</div>
+      <div class="cells"><div class="cell done">1</div><div class="cell done">2</div><div class="cell done">3</div><div class="cell done">4</div><div class="cell done">5</div><div class="cell done">6</div><div class="cell done">7</div><div class="cell done">8</div><div class="cell done">9</div><div class="cell done">10</div><div class="cell done">11</div><div class="cell done">12</div><div class="cell done">13</div><div class="cell done">14</div><div class="cell done">15</div></div>
+      <div class="grp">二、条件判断 16–25</div>
+      <div class="cells"><div class="cell done">16</div><div class="cell done">17</div><div class="cell done">18</div><div class="cell done">19</div><div class="cell done">20</div><div class="cell">21</div><div class="cell">22</div><div class="cell">23</div><div class="cell">24</div><div class="cell">25</div></div>
+      <div class="grp">三、逻辑推理 26–55</div>
+      <div class="cells"><div class="cell done">26</div><div class="cell done">27</div><div class="cell cur">46</div><div class="cell">47</div><div class="cell" style="opacity:.3">…</div><div class="cell">55</div></div>
+      <div class="grp">四、写作</div>
+      <div class="cells"><div class="cell">56</div><div class="cell">57</div></div>
+      <div style="margin-top:20px"><button class="tbtn pri" style="width:100%">交 卷</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- 报告 -->
+<div class="screen" id="s-report">
+  <div class="date-line"><h1>成绩报告</h1><span>2024 年 199 管综 · 用时 2 小时 47 分</span></div>
+  <div class="rep-top">
+    <div class="rc"><div class="v acc">96<small> /135</small></div><div class="l">客观题得分</div></div>
+    <div class="rc"><div class="v">200</div><div class="l">卷面满分</div></div>
+    <div class="rc"><div class="v">11<small> /4</small></div><div class="l">错题 / 未答</div></div>
+    <div class="rc"><div class="v" style="font-size:22px">62<small> /65</small></div><div class="l">主观题 AI 批改</div></div>
+  </div>
+  <div class="sect"><h2>错题</h2><span class="note">11 题 · 下次复习已由 FSRS 调度</span><a class="all" href="#">筛选 ›</a></div>
+  <div class="wrow">
+    <div class="wh"><b>答错</b><span>第 8 题 · 一、问题求解 · 0/3 分</span><span>下次复习 明天 09:00</span></div>
+    <div class="stem"><b>8.</b>　正三角形 ABC 边长为 3，以 A 为圆心、以 2 为半径作圆弧，则阴影面积为（　）</div>
+    <div class="pair"><span>你的答案 <b class="you">B</b></span><span>正确答案 <b class="ok">D</b></span></div>
+    <div style="margin-top:10px;line-height:1.8;color:var(--ink2);font-size:14px">
+      解析　设原日效率为 1……S = 9/4·√3 − π/2，故选 D。
+    </div>
+    <a class="ai-link" href="#">AI 讲解本题 →</a>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.proto-bar button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.proto-bar button').forEach(x=>x.classList.remove('on'))
+    b.classList.add('on')
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'))
+    document.getElementById('s-'+b.dataset.s).classList.add('on')
+    window.scrollTo({top:0})
+  }
+})
+document.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+  const box=o.closest('.opts');box.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')
+})
+</script>
+</body>
+</html>

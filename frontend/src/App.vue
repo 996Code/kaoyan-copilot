@@ -1,11 +1,12 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   NConfigProvider, NMessageProvider, NDialogProvider,
   zhCN, dateZhCN, NTag,
 } from 'naive-ui'
-import { clearToken } from './api'
+import { bindGlobalToast, clearToken } from './api'
+import ToastBinder from './components/ToastBinder.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,8 +42,18 @@ function logout() {
 
 <template>
   <n-config-provider :locale="zhCN" :date-locale="dateZhCN"
-    style="min-height:100vh" :theme-overrides="{ common: { primaryColor: '#2f6fed' } }">
+    style="min-height:100vh"
+    :theme-overrides="{
+      common: {
+        primaryColor: '#1677FF',
+        primaryColorHover: '#3C8DFF',
+        primaryColorPressed: '#0E5FD8',
+        primaryColorSuppl: '#1677FF',
+        borderRadius: '6px',
+      },
+    }">
     <n-message-provider>
+      <ToastBinder />
       <n-dialog-provider>
         <div class="shell" :class="{ 'in-exam': inExam }">
           <header v-if="!inExam && !isLogin" class="topbar">
@@ -50,9 +61,6 @@ function logout() {
               <div class="brand">
                 <span class="logo">考</span>
                 <span class="title">考研助手</span>
-                <n-tag v-if="daysLeft" size="small" type="warning" round style="margin-left:10px">
-                  距初试约 {{ daysLeft }} 天
-                </n-tag>
               </div>
               <nav class="nav">
                 <router-link to="/">首页</router-link>
@@ -65,7 +73,11 @@ function logout() {
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">
-                <span v-if="isLoggedIn && username" class="username">👤 {{ username }}</span>
+                <div v-if="daysLeft" class="exam-chip">距初试 <b>{{ daysLeft }}</b> 天</div>
+                <div v-if="isLoggedIn && username" class="username">
+                  <span class="avatar">{{ username[0].toUpperCase() }}</span>
+                  <span class="u-name">{{ username }}</span>
+                </div>
                 <button v-if="isLoggedIn" class="ghost-btn" @click="logout">退出</button>
               </div>
             </div>
@@ -90,35 +102,40 @@ function logout() {
 .shell { min-height: 100vh; background: #f6f7fb; }
 .shell.in-exam { background: #fff; }
 .dark .shell, .in-exam { background: inherit; }
-.topbar { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.86); backdrop-filter: blur(10px); border-bottom: 1px solid #e8eaf1; }
-.topbar-inner { max-width: var(--page-max); margin: 0 auto; padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 22px; }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-.logo { width: 26px; height: 26px; border-radius: 8px; background: #2f6fed; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-.title { font-size: 16px; }
-.nav { display: flex; gap: 4px; flex: 1; }
-.nav a { padding: 6px 12px; border-radius: 8px; color: #575e72; text-decoration: none; font-size: 14px; }
-.nav a.router-link-active { background: rgba(47,111,237,.1); color: #2f6fed; font-weight: 600; }
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--card); border-bottom: 1px solid var(--line); }
+.topbar-inner { max-width: 1240px; margin: 0 auto; padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; }
+.logo { width: 28px; height: 28px; border-radius: 7px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.title { font-size: 15px; }
+.nav { display: flex; gap: 2px; flex: 1; }
+.nav a { padding: 6px 14px; border-radius: 6px; color: var(--t2); text-decoration: none; font-size: 14px; }
+.nav a.router-link-active { background: var(--blue-bg); color: var(--blue); font-weight: 600; }
+.exam-chip { display: flex; align-items: center; gap: 6px; background: var(--blue-bg);
+  color: var(--blue-deep); font-weight: 700; border-radius: 6px; padding: 5px 12px; font-size: 13px; }
+.exam-chip b { font-size: 17px; font-variant-numeric: tabular-nums; }
 .right { display: flex; gap: 6px; align-items: center; }
-.username { font-size: 13px; color: #575e72; }
+.username { font-size: 13px; color: var(--t2); display: flex; align-items: center; gap: 7px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #3C8DFF, #0E5FD8);
+  color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
 .tabbar { display: none; }
 
 @media (max-width: 768px) {
   .nav { display: none; }
   .topbar-inner { padding: 0 14px; gap: 8px; }
   .title { font-size: 15px; }
-  .username { display: none; }
+  .username span.u-name { display: none; }
   .right .ghost-btn { font-size: 12px; padding: 4px 8px; }
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
     background: rgba(255,255,255,.94); backdrop-filter: blur(12px);
-    border-top: 1px solid #e8eaf1; padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
   }
   .tabbar a {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;
-    padding: 7px 0 5px; font-size: 10.5px; color: #8b93a7; text-decoration: none;
+    padding: 7px 0 5px; font-size: 10.5px; color: var(--t3); text-decoration: none;
   }
-  .tabbar a.router-link-active { color: #2f6fed; font-weight: 600; }
+  .tabbar a.router-link-active { color: var(--blue); font-weight: 600; }
   .tb-icon { font-size: 19px; line-height: 1; }
 }
 .ghost-btn { border: none; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: #575e72; }

@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方向 C · 轻快蓝</title>
+<style>
+:root{
+  --bg:#F3F7FE; --card:#FFFFFF; --card-blue:#EAF2FF;
+  --line:#E4EBF7; --blue:#1677FF; --blue-2:#0E5FD8; --blue-soft:#4D9AFF;
+  --t1:#1B2333; --t2:#5B6478; --t3:#98A0B4;
+  --ok:#00B578; --warn:#FF8F1F; --bad:#F5484D;
+  --r-lg:16px; --r-md:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased}
+.proto-bar{position:sticky;top:0;z-index:50;background:#1B2333;color:#D6DCEA;
+  display:flex;align-items:center;gap:14px;padding:9px 20px;font-size:13px}
+.proto-bar b{color:#8CC4FF}
+.proto-bar button{border:1px solid #39415A;background:transparent;color:#B6BDD1;
+  padding:4px 14px;border-radius:99px;font-size:13px;cursor:pointer}
+.proto-bar button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.screen{display:none;max-width:1180px;margin:0 auto;padding:18px 22px 70px}
+.screen.on{display:block}
+
+/* 顶栏：圆角浮条 */
+.topbar{background:var(--card);border-radius:var(--r-lg);display:flex;align-items:center;
+  height:56px;padding:0 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(27,60,140,.05)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15.5px}
+.brand .mark{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#4D9AFF,#0E5FD8);
+  display:flex;align-items:center;justify-content:center}
+.brand .mark svg{width:17px;height:17px}
+.topnav{display:flex;margin-left:24px;gap:4px;flex:1}
+.topnav a{padding:7px 14px;border-radius:99px;color:var(--t2);text-decoration:none;font-size:13.5px}
+.topnav a.on{background:var(--card-blue);color:var(--blue-2);font-weight:700}
+.count-chip{display:flex;align-items:center;gap:8px;background:var(--card-blue);border-radius:99px;
+  padding:7px 16px;font-size:13px;color:var(--blue-2);font-weight:700}
+.count-chip b{font-size:18px;font-variant-numeric:tabular-nums}
+.who{display:flex;align-items:center;gap:8px;margin-left:12px}
+.who .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4D9AFF,#0E5FD8);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.who span{font-size:13px;color:var(--t2)}
+
+/* 看板 */
+.hi{display:flex;align-items:center;gap:20px;background:linear-gradient(120deg,#EAF2FF 0%,#F6FAFF 70%);
+  border-radius:var(--r-lg);padding:22px 26px;margin-bottom:14px}
+.hi .ring{width:86px;height:86px;border-radius:50%;flex:none;
+  background:conic-gradient(var(--blue) 0 88%,#D9E7FF 88% 100%);
+  display:flex;align-items:center;justify-content:center}
+.hi .ring .in{width:66px;height:66px;border-radius:50%;background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hi .ring .in b{font-size:26px;font-variant-numeric:tabular-nums;line-height:1}
+.hi .ring .in span{font-size:10.5px;color:var(--t3)}
+.hi h1{font-size:21px;font-weight:800}
+.hi p{color:var(--t2);font-size:13px;margin-top:6px}
+.hi .cta{margin-left:auto;display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;font-weight:700;
+  border-radius:99px;padding:11px 24px;font-size:14px;background:var(--blue);color:#fff}
+.btn.ghost{background:var(--card);color:var(--blue-2);border:1.5px solid #B9D4FF}
+.btn.sm{padding:7px 16px;font-size:12.5px}
+.task-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.task{background:var(--card);border-radius:var(--r-lg);padding:18px;cursor:pointer;
+  transition:transform .15s, box-shadow .15s;box-shadow:0 2px 8px rgba(27,60,140,.04)}
+.task:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(27,60,140,.09)}
+.task .th{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.task .ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.task .ic svg{width:18px;height:18px}
+.ic.blue{background:var(--card-blue)} .ic.blue svg{stroke:var(--blue)}
+.ic.orange{background:#FFF1E3} .ic.orange svg{stroke:var(--warn)}
+.ic.green{background:#E4F6EF} .ic.green svg{stroke:var(--ok)}
+.task .tt b{font-size:14.5px}
+.task .tt span{display:block;color:var(--t3);font-size:11.5px;margin-top:1px}
+.task .tv{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.task .tv small{font-size:12px;color:var(--t3);font-weight:500;margin-left:4px}
+.task .tv.hot{color:var(--warn)}
+.task .foot{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.task .foot span{color:var(--t3);font-size:11.5px}
+.two{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+.panel{background:var(--card);border-radius:var(--r-lg);padding:18px 20px}
+.panel h3{font-size:15px;margin-bottom:14px}
+.panel h3 span{font-size:12px;color:var(--t3);font-weight:400;margin-left:8px}
+.mrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--bg)}
+.mrow:last-child{border-bottom:none}
+.mrow .nm{font-size:13.5px;font-weight:600;width:110px}
+.mrow .nm span{display:block;font-weight:400;color:var(--t3);font-size:11px}
+.mrow .bar{flex:1;height:8px;border-radius:99px;background:#EEF3FB;overflow:hidden}
+.mrow .bar i{display:block;height:100%;border-radius:99px}
+.mrow .pc{width:48px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:15px}
+.week{display:flex;gap:10px;align-items:flex-end;height:120px}
+.wc{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%}
+.wc i{width:60%;border-radius:99px 99px 4px 4px;background:linear-gradient(180deg,var(--blue-soft),var(--blue))}
+.wc i.lo{background:linear-gradient(180deg,#FFC08A,var(--warn))}
+.wc .v{font-size:11.5px;color:var(--t2);font-variant-numeric:tabular-nums}
+.wc .d{font-size:10.5px;color:var(--t3)}
+.mock-card{display:flex;align-items:center;gap:14px;background:var(--card-blue);
+  border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px}
+.mock-card .yr{width:52px;height:52px;border-radius:var(--r-md);background:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;
+  color:var(--blue-2);font-variant-numeric:tabular-nums;flex:none}
+.mock-card .in{flex:1}
+.mock-card .in b{font-size:14px}
+.mock-card .in span{display:block;color:var(--t2);font-size:12px;margin-top:2px}
+
+/* 模考 */
+.exam-bar{background:var(--card);border-radius:var(--r-lg);display:flex;align-items:center;
+  height:56px;padding:0 18px;margin-bottom:12px;box-shadow:0 2px 10px rgba(27,60,140,.05)}
+.exam-bar b{font-size:15px}
+.exam-bar .sec{color:var(--t2);font-size:13px;margin-left:12px}
+.exam-bar .r{margin-left:auto;display:flex;align-items:center;gap:12px}
+.clock{font-weight:800;font-size:19px;font-variant-numeric:tabular-nums;color:var(--blue-2)}
+.exam-body{display:grid;grid-template-columns:1fr 290px;gap:12px}
+.mat-card{background:var(--card-blue);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:12px;
+  font-size:14px;line-height:1.85;color:#2A3550}
+.mat-card .cap{display:inline-block;font-size:11.5px;font-weight:700;color:var(--blue-2);
+  background:#fff;border-radius:99px;padding:2px 10px;margin-bottom:8px}
+.qcard{background:var(--card);border-radius:var(--r-lg);padding:20px 22px}
+.opts{margin-top:14px;display:grid;gap:9px}
+.opt{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-md);
+  border:1.5px solid transparent;background:#F6F9FE;cursor:pointer;font-size:14px;transition:all .12s}
+.opt:hover{background:var(--card-blue)}
+.opt.sel{background:var(--card-blue);border-color:var(--blue)}
+.opt .k{width:24px;height:24px;border-radius:50%;background:#fff;color:var(--t2);flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  border:1px solid #DCE4F2}
+.opt.sel .k{background:var(--blue);border-color:var(--blue);color:#fff}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.side{background:var(--card);border-radius:var(--r-lg);padding:16px;position:sticky;top:76px}
+.side h4{font-size:13.5px;margin-bottom:8px}
+.side .grp{color:var(--t3);font-size:11.5px;margin:10px 0 6px}
+.cells{display:flex;flex-wrap:wrap;gap:5px}
+.cell{width:30px;height:27px;border-radius:8px;background:#F1F5FB;color:var(--t2);
+  display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;
+  font-variant-numeric:tabular-nums}
+.cell.done{background:var(--blue);color:#fff;font-weight:700}
+.cell.cur{background:#fff;border:2px solid var(--warn);color:var(--warn);font-weight:800}
+
+/* 报告 */
+.rep-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.rc{background:var(--card);border-radius:var(--r-lg);padding:18px;box-shadow:0 2px 8px rgba(27,60,140,.04)}
+.rc.hl{background:linear-gradient(135deg,#1677FF,#0E5FD8);color:#fff}
+.rc .l{font-size:12.5px;color:var(--t2)} .rc.hl .l{color:#CFE1FF}
+.rc .v{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:4px}
+.rc.hl .v{color:#fff}
+.rc .v small{font-size:13px;color:var(--t3);font-weight:500} .rc.hl .v small{color:#CFE1FF}
+.wrong{background:var(--card);border-radius:var(--r-lg);padding:16px 18px;margin-top:12px}
+.wrong .wh{display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12.5px}
+.chip{padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:700}
+.chip.r{background:#FDEDEE;color:var(--bad)}
+.chip.b{background:var(--card-blue);color:var(--blue-2)}
+.chip.g{background:#E4F6EF;color:#00875A}
+.ai-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;border:none;cursor:pointer;
+  background:var(--card-blue);color:var(--blue-2);font-weight:700;border-radius:99px;padding:8px 18px;font-size:13px}
+
+@media (max-width:820px){
+  .task-grid,.rep-grid{grid-template-columns:1fr 1fr}
+  .two{grid-template-columns:1fr}
+  .exam-body{grid-template-columns:1fr}
+  .topnav{display:none}
+  .hi{flex-wrap:wrap}
+  .hi .cta{margin-left:0;width:100%}
+  .screen{padding:14px 14px 50px}
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <b>方向 C · 轻快蓝</b><span style="color:#79839C">钉钉 App 7.0 气质：圆角、圆底图标、胶囊按钮、蓝系分层</span>
+  <span style="flex:1"></span>
+  <button data-s="dash" class="on">今日看板</button>
+  <button data-s="exam">整卷模考</button>
+  <button data-s="report">成绩报告</button>
+</div>
+
+<!-- 看板 -->
+<div class="screen on" id="s-dash">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M4 12l5 5L20 6"/></svg></div>
+      考研助手
+    </div>
+    <nav class="topnav">
+      <a class="on" href="#">今日</a><a href="#">复习</a><a href="#">单词</a>
+      <a href="#">练习</a><a href="#">错题</a><a href="#">真题</a><a href="#">管理</a>
+    </nav>
+    <div class="count-chip">距初试 <b>43</b> 天</div>
+    <div class="who"><span class="av">A</span><span>admin</span></div>
+  </div>
+
+  <div class="hi">
+    <div class="ring"><div class="in"><b>43</b><span>天</span></div></div>
+    <div>
+      <h1>冲刺 12.19</h1>
+      <p>管综 120 · 英二 55，过线就够了。今天还剩 4 项任务。</p>
+    </div>
+    <div class="cta">
+      <button class="btn ghost">看计划</button>
+      <button class="btn">继续复习 12 张 →</button>
+    </div>
+  </div>
+
+  <div class="task-grid">
+    <div class="task">
+      <div class="th"><div class="ic blue"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 2l4 4-4 4M3 6h18M21 22l-4-4 4-4M3 18h18"/></svg></div>
+        <div class="tt"><b>复习到期</b><span>FSRS 记忆调度</span></div></div>
+      <div class="tv hot">12<small>张（错8·词4）</small></div>
+      <div class="foot"><span>最早 3 天前到期</span><button class="btn sm">开始</button></div>
+    </div>
+    <div class="task">
+      <div class="th"><div class="ic blue"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 19V6a2 2 0 012-2h13v13H6a2 2 0 00-2 2zm0 0a2 2 0 002 2h13"/></svg></div>
+        <div class="tt"><b>背新单词</b><span>词频排序 · 每日50</span></div></div>
+      <div class="tv">372<small>/ 5530 已学</small></div>
+      <div class="foot"><span>今日剩 50 个</span><button class="btn sm ghost">去背</button></div>
+    </div>
+    <div class="task">
+      <div class="th"><div class="ic orange"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4l3 3"/></svg></div>
+        <div class="tt"><b>专项强化</b><span>最弱模块优先</span></div></div>
+      <div class="tv" style="color:var(--warn)">数学 42%</div>
+      <div class="foot"><span>近 96 次作答</span><button class="btn sm ghost">去练</button></div>
+    </div>
+    <div class="task">
+      <div class="th"><div class="ic green"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></div>
+        <div class="tt"><b>整卷模考</b><span>限时找手感</span></div></div>
+      <div class="tv">1<small>/ 2 本周</small></div>
+      <div class="foot"><span>建议：2025 英二</span><button class="btn sm ghost">查看</button></div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="panel">
+      <h3>各模块正确率<span>近期作答统计</span></h3>
+      <div class="mrow"><div class="nm">数学<span>管综</span></div><div class="bar"><i style="width:42%;background:var(--bad)"></i></div><div class="pc" style="color:var(--bad)">42%</div></div>
+      <div class="mrow"><div class="nm">完形填空<span>英二</span></div><div class="bar"><i style="width:55%;background:var(--warn)"></i></div><div class="pc" style="color:var(--warn)">55%</div></div>
+      <div class="mrow"><div class="nm">逻辑推理<span>管综</span></div><div class="bar"><i style="width:68%;background:var(--blue)"></i></div><div class="pc">68%</div></div>
+      <div class="mrow"><div class="nm">阅读理解<span>英二</span></div><div class="bar"><i style="width:71%;background:var(--blue)"></i></div><div class="pc">71%</div></div>
+      <div class="mrow"><div class="nm">翻译<span>英二</span></div><div class="bar"><i style="width:0"></i></div><div class="pc" style="color:var(--t3)">—</div></div>
+    </div>
+    <div>
+      <div class="panel" style="margin-bottom:12px">
+        <h3>近 7 天正确率</h3>
+        <div class="week">
+          <div class="wc"><span class="v">52%</span><i style="height:52%"></i><span class="d">31</span></div>
+          <div class="wc"><span class="v">61%</span><i style="height:61%"></i><span class="d">01</span></div>
+          <div class="wc"><span class="v">48%</span><i class="lo" style="height:48%"></i><span class="d">02</span></div>
+          <div class="wc"><span class="v">66%</span><i style="height:66%"></i><span class="d">03</span></div>
+          <div class="wc"><span class="v">59%</span><i style="height:59%"></i><span class="d">04</span></div>
+          <div class="wc"><span class="v">71%</span><i style="height:71%"></i><span class="d">05</span></div>
+          <div class="wc"><span class="v">63%</span><i style="height:63%"></i><span class="d">06</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>模考建议</h3>
+        <div class="mock-card">
+          <div class="yr">2025</div>
+          <div class="in"><b>英语（二）真题</b><span>已考 2/16 · 100 分 · 180 分钟</span></div>
+          <button class="btn sm">开始</button>
+        </div>
+        <div class="mock-card">
+          <div class="yr">2024</div>
+          <div class="in"><b>199 管综真题</b><span>已考 3/18 · 200 分 · 180 分钟</span></div>
+          <button class="btn sm ghost">查看</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 模考 -->
+<div class="screen" id="s-exam">
+  <div class="exam-bar">
+    <b>2024 年 199 管综真题</b><span class="sec">三、逻辑推理 · 第 46 题</span>
+    <div class="r">
+      <span style="color:var(--t3);font-size:12.5px">已答 32/57 · 已保存</span>
+      <span class="clock">02:41:36</span>
+      <button class="btn sm">交卷</button>
+    </div>
+  </div>
+  <div class="exam-body">
+    <div>
+      <div class="mat-card"><span class="cap">共享题干 · 第 46～47 题</span><br>
+        某公司年度审计发现，若采购流程存在漏洞，则财务报表必然出现异常。本年度财务报表未出现异常，因此采购流程不存在漏洞……
+      </div>
+      <div class="qcard">
+        <div style="font-size:15px;line-height:1.8"><b style="color:var(--blue)">46.</b> 以下哪项与上述论证中的推理结构最为类似？</div>
+        <div class="opts">
+          <div class="opt"><span class="k">A</span>如果天气晴朗，运动会就如期举行。运动会如期举行了，所以天气晴朗</div>
+          <div class="opt sel"><span class="k">B</span>如果限行政策生效，车流必然下降。车流未下降，所以限行政策未生效</div>
+          <div class="opt"><span class="k">C</span>只有投入研发，产品才有竞争力。产品有竞争力，所以投入了研发</div>
+          <div class="opt"><span class="k">D</span>价格上涨要么源于成本，要么源于需求。成本未变，所以源于需求</div>
+          <div class="opt"><span class="k">E</span>除非通过认证，否则不能上市。已通过认证，所以可以上市</div>
+        </div>
+        <div class="qnav">
+          <button class="btn sm ghost">‹ 上一题</button>
+          <span style="color:var(--t3);font-size:12px">A–E 选题 · ←→ 切题</span>
+          <button class="btn sm">下一题 ›</button>
+        </div>
+      </div>
+    </div>
+    <div class="side">
+      <h4>答题卡</h4>
+      <div class="grp">一、问题求解</div>
+      <div class="cells">
+        <div class="cell done">1</div><div class="cell done">2</div><div class="cell done">3</div>
+        <div class="cell done">4</div><div class="cell done">5</div><div class="cell done">6</div>
+        <div class="cell done">7</div><div class="cell done">8</div><div class="cell done">9</div>
+        <div class="cell done">10</div><div class="cell done">11</div><div class="cell done">12</div>
+        <div class="cell done">13</div><div class="cell done">14</div><div class="cell done">15</div>
+      </div>
+      <div class="grp">二、条件充分性判断</div>
+      <div class="cells">
+        <div class="cell done">16</div><div class="cell done">17</div><div class="cell done">18</div>
+        <div class="cell done">19</div><div class="cell done">20</div><div class="cell">21</div>
+        <div class="cell">22</div><div class="cell">23</div><div class="cell">24</div><div class="cell">25</div>
+      </div>
+      <div class="grp">三、逻辑推理</div>
+      <div class="cells">
+        <div class="cell done">26</div><div class="cell done">27</div><div class="cell cur">46</div>
+        <div class="cell">47</div><div class="cell" style="opacity:.35">…</div><div class="cell">55</div>
+      </div>
+      <div class="grp">四、写作</div>
+      <div class="cells"><div class="cell">56</div><div class="cell">57</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 报告 -->
+<div class="screen" id="s-report">
+  <div class="rep-grid">
+    <div class="rc hl"><div class="l">客观题得分</div><div class="v">96<small> /135</small></div></div>
+    <div class="rc"><div class="l">卷面满分</div><div class="v">200</div></div>
+    <div class="rc"><div class="l">错题 / 未答</div><div class="v">11<small> /4</small></div></div>
+    <div class="rc"><div class="l">主观题 AI 批改</div><div class="v" style="font-size:22px">62<small> /65</small></div></div>
+  </div>
+  <div class="wrong">
+    <div class="wh"><span class="chip r">答错</span><span class="chip b">答案存在版本争议</span>
+      <span style="color:var(--t3)">第 8 题 · 一、问题求解 · 0/3</span>
+      <span class="chip g" style="margin-left:auto">明天 09:00 复习</span></div>
+    <div style="line-height:1.8;font-size:14.5px"><b style="color:var(--blue)">8.</b>
+      正三角形 ABC 边长为 3，以 A 为圆心、以 2 为半径作圆弧，则阴影面积为（　）
+    </div>
+    <div style="display:flex;gap:18px;margin-top:10px;font-size:13.5px">
+      <span>你答 <b style="color:var(--bad)">B</b></span><span>正确 <b style="color:var(--ok)">D</b></span>
+    </div>
+    <button class="ai-btn">✦ AI 讲解本题</button>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.proto-bar button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.proto-bar button').forEach(x=>x.classList.remove('on'))
+    b.classList.add('on')
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'))
+    document.getElementById('s-'+b.dataset.s).classList.add('on')
+    window.scrollTo({top:0})
+  }
+})
+document.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+  const box=o.closest('.opts');box.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel')
+})
+document.querySelectorAll('.cell').forEach(c=>c.onclick=()=>c.classList.toggle('done'))
+</script>
+</body>
+</html>

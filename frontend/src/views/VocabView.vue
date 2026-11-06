@@ -136,12 +136,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </template>
 
 <style scoped>
-.vocab-card { background:#fff; border:1px solid #eceef5; border-radius:16px; padding:26px 24px; text-align:center; }
+.vocab-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:26px 24px; text-align:center; }
 .batch-progress { font-size:13px; margin-bottom:10px; }
 .word-main { padding:14px 0 22px; }
 .word { font-size:46px; font-weight:800; letter-spacing:.5px; }
 .definition { font-size:19px; margin-top:10px; }
-.example { color:#575e72; font-size:14px; line-height:1.7; margin-top:12px; }
+.example { color:var(--t2); font-size:14px; line-height:1.7; margin-top:12px; }
 .mark-row { display:flex; gap:14px; justify-content:center; }
 .finish-card { text-align:center; padding:60px 0; }
 
