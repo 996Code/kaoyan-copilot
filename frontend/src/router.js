@@ -18,6 +18,7 @@ export const router = createRouter({
   routes: [
     { path: '/login', component: LoginView },
     { path: '/', component: HomeView },
+    { path: '/papers', component: PapersView, props: true },
     { path: '/papers/:subject', component: PapersView, props: true },
     { path: '/exam/:paperId', component: ExamView, props: true },
     { path: '/report/:examId', component: ReportView, props: true },

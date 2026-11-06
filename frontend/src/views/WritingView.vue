@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { NTabs, NTabPane } from 'naive-ui'
+import { NSelect, NTabs, NTabPane } from 'naive-ui'
 import { renderRich } from '../markdown'
 
 const tab = ref('lunxiao')
@@ -121,6 +121,7 @@ Several factors may account for this [trend/phenomenon]. **First**, __. **Moreov
     ],
   },
 }
+const tabOptions = Object.entries(SECTIONS).map(([k, v]) => ({ label: `${v.name}（${v.score}）`, value: k }))
 </script>
 
 <template>
@@ -130,7 +131,13 @@ Several factors may account for this [trend/phenomenon]. **First**, __. **Moreov
       <span class="sub">管综两篇 + 英二两篇：框架 · 句式 · 素材（配合「AI 批改」使用：看模板 → 练真题 → AI 评分）</span>
     </div>
 
-    <n-tabs v-model:value="tab" type="line" animated>
+    <!-- 移动端：下拉选择 -->
+    <div class="w-select">
+      <n-select v-model:value="tab" :options="tabOptions" size="large" />
+    </div>
+    <!-- 桌面：Tab -->
+    <div class="w-tabs">
+      <n-tabs v-model:value="tab" type="line" animated>
       <n-tab-pane v-for="(s, key) in SECTIONS" :key="key" :name="key" :tab="`${s.name} ${s.score}`">
         <div v-for="b in s.blocks" :key="b.title" class="wblock panel">
           <div class="section-title" style="font-size:14px">{{ b.title }}</div>
@@ -138,6 +145,7 @@ Several factors may account for this [trend/phenomenon]. **First**, __. **Moreov
         </div>
       </n-tab-pane>
     </n-tabs>
+    </div>
   </div>
 </template>
 
@@ -146,4 +154,10 @@ Several factors may account for this [trend/phenomenon]. **First**, __. **Moreov
 .kb-head h1 { font-size:20px; font-weight:700; margin:0; }
 .kb-head .sub { color:var(--t3); font-size:13px; }
 .wblock { padding:16px 20px; margin-bottom:12px; border-radius:var(--r-card); }
+
+.w-select { display: none; }
+@media (max-width: 768px) {
+  .w-select { display: block; margin-bottom: 12px; }
+  .w-tabs { display: none; }
+}
 </style>
