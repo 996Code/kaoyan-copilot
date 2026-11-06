@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NButton, NModal, NSpin, useDialog } from 'naive-ui'
+import { NButton, NModal, NSpin, useDialog, useMessage } from 'naive-ui'
 import { api } from '../api'
 import QuestionItem from '../components/QuestionItem.vue'
 import GroupMaterial from '../components/GroupMaterial.vue'
@@ -10,6 +10,7 @@ const props = defineProps({ paperId: { type: String, required: true } })
 const route = useRoute()
 const router = useRouter()
 const dialog = useDialog()
+const message = useMessage()
 
 const loading = ref(true)
 const exam = ref(null)
@@ -143,6 +144,12 @@ function onKey(e) {
 }
 
 /* ---------- 交卷 ---------- */
+async function exitExam() {
+  await saveNow()
+  message.success('进度已保存，回来可继续作答')
+  router.push(`/papers/${paper.value?.subject_code || 'gz199'}`)
+}
+
 function askSubmit() {
   saveNow()
   confirmSubmit.value = true
@@ -187,6 +194,7 @@ onBeforeUnmount(() => {
     <template v-else-if="item">
       <!-- 顶栏 -->
       <div class="exam-topbar">
+        <button class="exit-btn" @click="exitExam" title="保存并退出">‹</button>
         <div class="et-left">
           <b><span class="pn-full">{{ paper.name }}</span><span class="pn-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }}真题</span></b>
           <span class="muted et-section">{{ sectionName }}</span>
@@ -270,6 +278,9 @@ onBeforeUnmount(() => {
 .loading-center { display: flex; justify-content: center; padding-top: 120px; }
 .exam-topbar { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: space-between;
   padding: 10px 20px; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line-soft); }
+.exit-btn { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); color: var(--t2); font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+.exit-btn:hover { border-color: var(--blue); color: var(--blue); }
 .et-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; max-width: 60%; }
 .et-left b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pn-short { display: none; }
@@ -286,6 +297,7 @@ onBeforeUnmount(() => {
 .anscard-close { display: none; }
 .card-fab { display: none; }
 @media (max-width: 768px) {
+  .qcard, .gmat { border-radius: var(--r-card); }
   .exam-topbar { padding: 8px 14px; }
   .et-left { flex: 0 1 auto; max-width: 46%; }
   .pn-full { display: none; }

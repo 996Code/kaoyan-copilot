@@ -26,7 +26,10 @@ const modules = ref([])
 const items = ref([])
 const loading = ref(false)
 const openAnalysis = ref({}) // qid -> bool
-const visibleCount = ref(saved.visibleCount || 30)
+const expanded = ref({}) // qid -> 是否展开完整题目
+// 移动端更克制：默认 10 条；桌面 30 条
+const mobileDefault = typeof window !== 'undefined' && window.innerWidth <= 768 ? 10 : 30
+const visibleCount = ref(saved.visibleCount || mobileDefault)
 
 const moduleOptions = computed(() => [
   { label: '全部模块', value: null },
@@ -154,18 +157,23 @@ onMounted(async () => {
     <n-empty v-else-if="!items.length" description="这个视图下没有错题——要么你很强，要么还没开始做题"
       style="margin:60px 0" />
 
-    <div v-for="item in visibleItems" :key="item.question.id" class="wb-card">
-      <div class="wb-meta">
+    <div v-for="item in visibleItems" :key="item.question.id" class="wb-card"
+      :class="{ closed: !expanded[item.question.id] }">
+      <div class="wb-meta" @click="expanded[item.question.id] = !expanded[item.question.id]">
         <n-tag type="error" size="small">错 {{ item.wrong_count }} 次</n-tag>
-        <n-tag v-if="item.question.disputed" type="warning" size="small">答案存在版本争议</n-tag>
-        <span class="muted meta-text">
-          {{ item.question.year }} 年 · {{ item.module.name }} ·
-          {{ item.question.qtype === 'single_choice' ? `第 ${item.question.number} 题` : item.module.name }}
-          · 最近做错 {{ (item.last_wrong_at || '').replace('T', ' ').slice(0, 16) }}
+        <span class="wb-preview">
+          {{ item.question.year }} 年 · {{ item.module.name }} · 第 {{ item.question.number }} 题
         </span>
+        <n-tag v-if="item.question.disputed" type="warning" size="small">争议</n-tag>
+        <span class="wb-toggle">{{ expanded[item.question.id] ? '收起 ▴' : '展开 ▾' }}</span>
+      </div>
+
+      <template v-if="expanded[item.question.id]">
+      <div class="wb-meta-sub muted">
+        最近做错 {{ (item.last_wrong_at || '').replace('T', ' ').slice(0, 16) }}
         <n-button size="tiny" :type="item.mastered ? 'success' : 'default'" style="margin-left:auto"
-          @click="toggleMastered(item)">
-          {{ item.mastered ? '✅ 已消灭（点击撤销）' : '标记已消灭' }}
+          @click.stop="toggleMastered(item)">
+          {{ item.mastered ? '已消灭（撤销）' : '标记已消灭' }}
         </n-button>
       </div>
 
@@ -187,6 +195,7 @@ onMounted(async () => {
       </div>
 
       <AiPanel :endpoint="explainEndpoint(item)" />
+      </template>
     </div>
 
     <div v-if="items.length > visibleCount" class="load-more">
@@ -201,7 +210,12 @@ onMounted(async () => {
 .wb-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .stat-chip { font-size: 12.5px; }
 .wb-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
-.wb-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.wb-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; cursor: pointer; user-select: none; }
+.wb-meta-sub { display: flex; align-items: center; font-size: 12px; margin-bottom: 8px; }
+.wb-preview { font-size: 13px; color: var(--t2); flex: 1; min-width: 0; }
+.wb-toggle { margin-left: auto; color: var(--blue); font-size: 12.5px; white-space: nowrap; }
+.wb-card.closed { padding: 12px 16px; }
+.wb-card.closed .wb-meta { margin-bottom: 0; }
 .meta-text { font-size: 12.5px; }
 .verdict { margin-top: 8px; font-size: 14px; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }

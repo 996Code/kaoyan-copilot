@@ -35,6 +35,14 @@ const sortedModules = computed(() =>
 <template>
   <div class="page">
     <!-- 任务头 -->
+    <div class="m-hero">
+      <div class="mh-num">{{ plan?.days_left ?? '—' }}<small>天</small></div>
+      <div class="mh-text">
+        <b>距 2027 考研初试</b>
+        <span>{{ plan?.today || '' }} · 目标 管综 120 / 英二 55</span>
+      </div>
+    </div>
+
     <div class="kb-head">
       <h1>今日任务</h1>
       <span class="sub">{{ plan?.today || '' }} · 目标 管综 120 / 英二 55</span>
@@ -193,10 +201,33 @@ const sortedModules = computed(() =>
 .hs { color: var(--t3); font-size: 12px; }
 .go { margin-left: auto; color: var(--blue); font-size: 12.5px; }
 
+/* 移动端 hero：仅手机显示 */
+.m-hero { display: none; }
+
 @media (max-width: 768px) {
-  .task-grid { grid-template-columns: 1fr 1fr; }
+  .m-hero {
+    display: flex; align-items: center; gap: 16px;
+    background: linear-gradient(120deg, var(--blue) 0%, var(--blue-deep) 100%);
+    border-radius: var(--r-card); color: #fff;
+    padding: 18px 20px; margin: 10px 0 14px;
+  }
+  .mh-num { font-size: 46px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .mh-num small { font-size: 15px; font-weight: 600; margin-left: 2px; opacity: .85; }
+  .mh-text b { display: block; font-size: 16px; }
+  .mh-text span { display: block; font-size: 12px; opacity: .82; margin-top: 3px; }
+  .kb-head { display: none; }
+
+  /* 任务卡变单列横条：icon + 文案在左，数字在右 */
+  .task-grid { grid-template-columns: 1fr; gap: 10px; }
+  .task { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .th { flex: 1; margin: 0; min-width: 0; }
+  .th span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tv { font-size: 20px; margin-left: auto; text-align: right; white-space: nowrap; }
+  .tv small { display: block; font-size: 10.5px; }
+  .tl, .track, .go { display: none; }
+  .task::after { content: '›'; color: var(--t3); font-size: 20px; margin-left: 2px; }
+
   .data-grid { grid-template-columns: 1fr; }
-  .tv { font-size: 22px; }
   .bar-cell { width: auto; }
   .mods .cnt { display: none; }
 }

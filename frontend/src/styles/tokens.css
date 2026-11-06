@@ -38,3 +38,11 @@
   --fs-title: 20px;  /* 页标题 */
   --fs-num: 24px;    /* 数据数字（tabular） */
 }
+
+/* 移动端：圆角与节奏放大——手机上卡片需要更"从容"的呼吸感 */
+@media (max-width: 768px) {
+  :root {
+    --r-card: 12px;
+    --r-btn: 8px;
+  }
+}
