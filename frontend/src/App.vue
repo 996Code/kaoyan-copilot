@@ -26,9 +26,14 @@ const username = computed(() => {
   void route.fullPath
   return localStorage.getItem('kaoyan_username') || ''
 })
+const isAdmin = computed(() => {
+  void route.fullPath
+  return localStorage.getItem('kaoyan_is_admin') === '1'
+})
 function logout() {
   clearToken()
   localStorage.removeItem('kaoyan_username')
+  localStorage.removeItem('kaoyan_is_admin')
   router.push('/login')
 }
 </script>
@@ -56,6 +61,7 @@ function logout() {
                 <router-link to="/wrongbook">错题本</router-link>
                 <router-link to="/papers/gz199">管综真题</router-link>
                 <router-link to="/papers/en2">英二真题</router-link>
+                <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">
                 <span v-if="isLoggedIn && username" class="username">👤 {{ username }}</span>

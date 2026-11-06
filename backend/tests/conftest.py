@@ -15,12 +15,16 @@ SEED = {"paper_id": None, "q_ids": [], "word_ids": []}
 
 
 def _seed() -> None:
+    from app.core.auth import register_user
     from app.core.db import SessionLocal
     from app.models import (
         Module, Paper, PaperQuestion, PaperSection, Question, Subject, Word,
     )
 
     with SessionLocal() as s:
+        # 种子管理员（不依赖 login 时的空表自动建号，避免注册顺序影响）
+        admin = register_user(s, "admin", "kaoyan2026")
+        admin.is_admin = True
         sub = Subject(code="gz199", name="测试管综")
         s.add(sub)
         s.flush()

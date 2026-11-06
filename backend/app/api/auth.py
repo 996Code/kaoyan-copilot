@@ -20,13 +20,21 @@ class LoginIn(BaseModel):
     password: str
 
 
+def _auth_response(user) -> dict:
+    return {
+        "token": issue_token(user.id),
+        "username": user.username,
+        "is_admin": bool(user.is_admin),
+    }
+
+
 @router.post("/register")
 def register(body: RegisterIn, session: Session = Depends(get_session)):
     if find_user(session, body.username) is not None:
         raise HTTPException(status_code=409, detail="用户名已存在")
     user = register_user(session, body.username, body.password)
     session.commit()
-    return {"token": issue_token(user.id), "username": user.username}
+    return _auth_response(user)
 
 
 @router.post("/login")
@@ -35,9 +43,9 @@ def login(body: LoginIn, session: Session = Depends(get_session)):
     user = find_user(session, body.username)
     if user is None or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="用户名或密码错误")
-    return {"token": issue_token(user.id), "username": user.username}
+    return _auth_response(user)
 
 
 @router.get("/me")
 def me(user=Depends(current_user)):
-    return {"id": user.id, "username": user.username}
+    return {"id": user.id, "username": user.username, "is_admin": bool(user.is_admin)}

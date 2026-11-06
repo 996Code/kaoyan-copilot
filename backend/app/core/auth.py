@@ -54,13 +54,14 @@ def register_user(session: Session, username: str, password: str) -> "User":
 
 
 def seed_owner_if_empty(session: Session) -> None:
-    """无任何用户时，用 .env 的 AUTH_USERNAME/AUTH_PASSWORD 建立首个账号。"""
+    """无任何用户时，用 .env 的 AUTH_USERNAME/AUTH_PASSWORD 建立首个管理员账号。"""
     from app.models.user import User
 
     if session.scalar(select(User).limit(1)) is None:
-        register_user(session, settings.auth_username, settings.auth_password)
+        user = register_user(session, settings.auth_username, settings.auth_password)
+        user.is_admin = True
         session.commit()
-        print(f"[auth] 已创建初始用户 {settings.auth_username!r}")
+        print(f"[auth] 已创建初始管理员 {settings.auth_username!r}")
 
 
 def current_user(request: Request, session: Session = Depends(get_session)) -> "User":
@@ -76,4 +77,10 @@ def current_user(request: Request, session: Session = Depends(get_session)) -> "
     user = session.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="用户不存在")
+    return user
+
+
+def require_admin(user=Depends(current_user)) -> "User":
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="需要管理员权限")
     return user

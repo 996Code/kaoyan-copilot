@@ -20,6 +20,7 @@ async function submit() {
     })
     setToken(data.token)
     localStorage.setItem('kaoyan_username', data.username)
+    localStorage.setItem('kaoyan_is_admin', data.is_admin ? '1' : '0')
     location.hash = '#/'
   } catch (e) {
     error.value = e.message

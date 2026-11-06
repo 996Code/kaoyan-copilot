@@ -9,6 +9,7 @@ import PracticeView from './views/PracticeView.vue'
 import WrongbookView from './views/WrongbookView.vue'
 import ReviewView from './views/ReviewView.vue'
 import VocabView from './views/VocabView.vue'
+import AdminView from './views/AdminView.vue'
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -22,6 +23,7 @@ export const router = createRouter({
     { path: '/wrongbook', component: WrongbookView },
     { path: '/review', component: ReviewView },
     { path: '/vocab', component: VocabView },
+    { path: '/admin', component: AdminView },
   ],
 })
 

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import current_user
 from app.core.db import get_session
 from app.core.llm import chat_complete, chat_stream, llm_ready
+from app.core.settings_store import get_llm_config
 from app.models import AiCache, AnswerRecord, ExamRecord, Question
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -116,8 +117,9 @@ async def explain(
             yield _sse({"type": "done", "cached": True})
             return
 
-        if not llm_ready():
-            yield _sse({"type": "error", "message": "LLM 未配置：请在 backend/.env 填写 LLM_BASE_URL / LLM_API_KEY / LLM_MODEL 后重启"})
+        cfg = get_llm_config(session)
+        if not llm_ready(cfg):
+            yield _sse({"type": "error", "message": "LLM 未配置：请管理员在「系统管理 → LLM 配置」中填写并保存"})
             return
 
         messages = [
@@ -126,7 +128,7 @@ async def explain(
         ]
         full: list[str] = []
         try:
-            async for chunk in chat_stream(messages):
+            async for chunk in chat_stream(messages, cfg):
                 full.append(chunk)
                 yield _sse({"type": "delta", "text": chunk})
         except Exception as e:  # noqa: BLE001
@@ -192,8 +194,9 @@ async def grade(body: GradeIn, user=Depends(current_user), session: Session = De
     if cache is not None and cache.response_json:
         return {"result": cache.response_json, "cached": True}
 
-    if not llm_ready():
-        raise HTTPException(status_code=503, detail="LLM 未配置：请在 backend/.env 填写 LLM_BASE_URL / LLM_API_KEY / LLM_MODEL 后重启")
+    cfg = get_llm_config(session)
+    if not llm_ready(cfg):
+        raise HTTPException(status_code=503, detail="LLM 未配置：请管理员在「系统管理 → LLM 配置」中填写并保存")
 
     user_prompt = (
         f"【评分标准】\n{rubric}\n\n"
@@ -207,6 +210,7 @@ async def grade(body: GradeIn, user=Depends(current_user), session: Session = De
                 {"role": "system", "content": GRADE_SYSTEM},
                 {"role": "user", "content": user_prompt},
             ],
+            cfg,
             temperature=0.2,
         )
     except Exception as e:  # noqa: BLE001

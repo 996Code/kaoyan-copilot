@@ -7,8 +7,16 @@
 cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 # 2. 打开 http://localhost:8000 （局域网 http://<本机IP>:8000）
-#    多用户：页面自行注册账号；首个账号 owner 在 .env（AUTH_USERNAME/AUTH_PASSWORD），历史数据归属 owner
+#    多用户：页面自行注册账号；初始管理员 admin/kaoyan2026（.env 的 AUTH_USERNAME/AUTH_PASSWORD）
 ```
+
+## 系统管理（仅 admin 可见）
+
+登录 admin 账号后顶栏出现「系统管理」：
+
+- **用户管理**：每用户的模考场次/作答数/正确率/待巩固错题/记忆卡/已学词/最近活跃；重置密码；删除用户（**级联清理其全部个人数据**，题库等公共数据不动，管理员账号不可删）
+- **LLM 配置**：接口地址 / API Key（打码显示，留空不改）/ 模型名，保存后**立即生效无需重启**，附带「测试连接」；AI 讲解与主观题批改共用此配置，讲解结果按题缓存多用户共享
+- **系统统计**：用户/试卷/题目/词汇/模考/作答/记忆卡/AI 缓存总量
 
 ## 开发模式（改前端代码时）
 
@@ -49,9 +57,16 @@ cd backend
 
 - 管综 37 题答案标 raw.answer_disputed（一题多卷年份无独立源），报告/练习页有「答案存在版本争议」提示
 - 2012/2025 英二大作文图表源仓库缺失
-- AI 讲解/批改走 .env 里的 LLM 配置（OpenAI 兼容接口，qwen3.7-plus）；结果按「题目+上下文」缓存进 ai_cache 表，同题不重复计费
+- **LLM 配置存在数据库**（系统管理 → LLM 配置，改动即生效）；.env 不再有 LLM 项。历史迁移：scripts/migrate_admin.py 曾把 .env 的配置搬入库
 - AI 批改只覆盖主观题：英二翻译/大小作文、管综论证有效性分析/论说文，按官方评分档次 prompt，分数从紧
 - 服务器重启后需重新登录（token 存内存，安全优先）
+
+## 迁移脚本
+
+```bash
+.venv/bin/python -I scripts/migrate_users.py   # 用户模块迁移（表加 user_id、存量归属 admin）
+.venv/bin/python -I scripts/migrate_admin.py   # 系统管理迁移（is_admin、system_settings、LLM 配置入库）
+```
 
 ## 自动化测试
 

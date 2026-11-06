@@ -4,6 +4,7 @@ from app.models.exam import AnswerRecord, ExamRecord
 from app.models.paper import Paper, PaperQuestion, PaperSection
 from app.models.question import Question, QuestionGroup, question_knowledge_point
 from app.models.review import ReviewCard, ReviewLog
+from app.models.setting import SystemSetting
 from app.models.study import AiCache, WrongItem
 from app.models.user import User
 from app.models.word import Word
@@ -26,5 +27,6 @@ __all__ = [
     "AiCache",
     "ReviewCard",
     "ReviewLog",
+    "SystemSetting",
     "User",
 ]

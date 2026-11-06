@@ -1,48 +1,39 @@
-"""LLM 客户端（OpenAI 兼容 /chat/completions），配置在 backend/.env：
-
-LLM_BASE_URL=https://api.openai.com/v1   # 任何 OpenAI 兼容接口
-LLM_API_KEY=sk-xxx
-LLM_MODEL=gpt-4o-mini
-"""
+"""LLM 客户端（OpenAI 兼容 /chat/completions）。配置来自 system_settings 表（管理页可改）。"""
 
 from typing import AsyncIterator
 
 import httpx
 
-from app.core.config import settings
+
+def llm_ready(cfg: dict) -> bool:
+    return bool(cfg.get("llm_base_url") and cfg.get("llm_api_key") and cfg.get("llm_model"))
 
 
-def llm_ready() -> bool:
-    return bool(settings.llm_base_url and settings.llm_api_key and settings.llm_model)
-
-
-async def chat_complete(messages: list[dict], temperature: float = 0.3) -> str:
+async def chat_complete(messages: list[dict], cfg: dict, temperature: float = 0.3, timeout: float = 120) -> str:
     """非流式补全，返回文本。"""
-    url = settings.llm_base_url.rstrip("/") + "/chat/completions"
-    async with httpx.AsyncClient(timeout=120) as client:
+    url = cfg["llm_base_url"].rstrip("/") + "/chat/completions"
+    async with httpx.AsyncClient(timeout=timeout) as client:
         resp = await client.post(
             url,
-            headers={"Authorization": f"Bearer {settings.llm_api_key}"},
-            json={
-                "model": settings.llm_model,
-                "messages": messages,
-                "temperature": temperature,
-            },
+            headers={"Authorization": f"Bearer {cfg['llm_api_key']}"},
+            json={"model": cfg["llm_model"], "messages": messages, "temperature": temperature},
         )
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
 
 
-async def chat_stream(messages: list[dict], temperature: float = 0.3) -> AsyncIterator[str]:
+async def chat_stream(messages: list[dict], cfg: dict, temperature: float = 0.3) -> AsyncIterator[str]:
     """流式补全，逐段 yield 增量文本。"""
-    url = settings.llm_base_url.rstrip("/") + "/chat/completions"
+    import json
+
+    url = cfg["llm_base_url"].rstrip("/") + "/chat/completions"
     async with httpx.AsyncClient(timeout=120) as client:
         async with client.stream(
             "POST",
             url,
-            headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+            headers={"Authorization": f"Bearer {cfg['llm_api_key']}"},
             json={
-                "model": settings.llm_model,
+                "model": cfg["llm_model"],
                 "messages": messages,
                 "temperature": temperature,
                 "stream": True,
@@ -56,8 +47,6 @@ async def chat_stream(messages: list[dict], temperature: float = 0.3) -> AsyncIt
                 if data == "[DONE]":
                     break
                 try:
-                    import json
-
                     delta = json.loads(data)["choices"][0].get("delta", {})
                     if delta.get("content"):
                         yield delta["content"]
