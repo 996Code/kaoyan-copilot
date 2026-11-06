@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   NConfigProvider, NMessageProvider, NDialogProvider,
@@ -38,6 +38,22 @@ function logout() {
   localStorage.removeItem('kaoyan_username')
   localStorage.removeItem('kaoyan_is_admin')
   router.push('/login')
+}
+
+/* 移动端「更多」菜单 */
+const moreOpen = ref(false)
+const moreActive = computed(() => route.path.startsWith('/papers') || route.path.startsWith('/admin'))
+const moreItems = computed(() => {
+  const items = [
+    { to: '/papers/gz199', icon: 'exam', label: '管综真题' },
+    { to: '/papers/en2', icon: 'exam', label: '英二真题' },
+  ]
+  if (isAdmin.value) items.push({ to: '/admin', icon: 'ai', label: '系统管理' })
+  return items
+})
+function goMore(to) {
+  moreOpen.value = false
+  router.push(to)
 }
 </script>
 
@@ -93,7 +109,25 @@ function logout() {
           <router-link to="/vocab"><AppIcon name="vocab" :size="22" />单词</router-link>
           <router-link to="/practice"><AppIcon name="practice" :size="22" />练习</router-link>
           <router-link to="/wrongbook"><AppIcon name="wrong" :size="22" />错题</router-link>
+          <a :class="{ 'router-link-active': moreActive }" @click.prevent="moreOpen = true">
+            <AppIcon name="trend" :size="22" />更多
+          </a>
         </nav>
+
+        <!-- 移动端「更多」底部菜单 -->
+        <div v-if="moreOpen" class="more-mask" @click="moreOpen = false"></div>
+        <div v-if="moreOpen" class="more-sheet">
+          <div class="more-grab"></div>
+          <button v-for="m in moreItems" :key="m.to" class="more-item" @click="goMore(m.to)">
+            <span class="mi-ic"><AppIcon :name="m.icon" :size="20" /></span>
+            <span>{{ m.label }}</span>
+            <AppIcon name="check" :size="14" style="margin-left:auto;opacity:.25" />
+          </button>
+          <button v-if="isLoggedIn" class="more-item" @click="moreOpen = false; logout()">
+            <span class="mi-ic"><AppIcon name="wrong" :size="20" /></span>
+            <span>退出登录（{{ username }}）</span>
+          </button>
+        </div>
       </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
@@ -120,6 +154,11 @@ function logout() {
   color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
 .tabbar { display: none; }
 
+/* 「更多」底部菜单（移动端） */
+.more-mask { display: none; }
+.more-sheet { display: none; }
+
+
 @media (max-width: 768px) {
   .nav { display: none; }
   .topbar-inner { padding: 0 14px; gap: 8px; }
@@ -139,6 +178,28 @@ function logout() {
   }
   .tabbar a.router-link-active { color: var(--blue); font-weight: 600; }
   .tabbar a.router-link-active svg { transform: translateY(-1px); }
+
+  .more-mask {
+    display: block; position: fixed; inset: 0; z-index: 45;
+    background: rgba(16, 22, 34, 0.4);
+  }
+  .more-sheet {
+    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 46;
+    background: var(--card); border-radius: 16px 16px 0 0;
+    padding: 6px 14px calc(18px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 30px rgba(20, 30, 60, 0.18);
+  }
+  .more-grab { width: 36px; height: 4px; border-radius: 2px; background: var(--line); margin: 4px auto 10px; }
+  .more-item {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: transparent; border: none; cursor: pointer;
+    padding: 14px 8px; font-size: 15px; color: var(--t1);
+    border-bottom: 1px solid var(--line-soft); text-align: left;
+  }
+  .more-item:last-child { border-bottom: none; }
+  .more-item:active { background: var(--card-hover); }
+  .mi-ic { width: 36px; height: 36px; border-radius: 9px; background: var(--blue-bg); color: var(--blue);
+    display: flex; align-items: center; justify-content: center; }
 }
 .ghost-btn { border: none; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: #575e72; }
 .ghost-btn:hover { background: rgba(128,128,128,.1); }
