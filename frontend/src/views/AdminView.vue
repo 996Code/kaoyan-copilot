@@ -162,8 +162,8 @@ onMounted(load)
             <span>{{ u.words_learned }}</span>
             <span class="muted">{{ fmt(u.last_active) }}</span>
             <span class="ops">
-              <n-button size="tiny" @click="resetPassword(u)">重置密码</n-button>
-              <n-button size="tiny" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
+              <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
+              <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
             </span>
           </div>
         </n-card>

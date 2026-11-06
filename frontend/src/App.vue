@@ -164,7 +164,7 @@ function goMore(to) {
   .topbar-inner { padding: 0 14px; gap: 8px; }
   .title { font-size: 15px; }
   .username span.u-name { display: none; }
-  .right .ghost-btn { font-size: 12px; padding: 4px 8px; }
+  .right .ghost-btn { display: none; }  /* 退出在「更多」菜单里 */
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;

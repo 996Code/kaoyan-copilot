@@ -18,6 +18,13 @@ const paper = ref(null)
 const results = ref({})
 const answers = ref({})
 const filter = ref('wrong') // wrong | unanswered | subjective | all
+// 解析默认展开于桌面、折叠于移动端（移动端报告页太长）
+const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768
+const openAnalysis = ref({})
+function analysisOpen(id) {
+  const v = openAnalysis.value[id]
+  return v === undefined ? isDesktop : v
+}
 const gradeResults = reactive({}) // qid -> {loading, data, error}
 
 async function doGrade(q) {
@@ -209,8 +216,11 @@ const counts = computed(() => {
         </div>
 
         <div v-if="it.q.analysis" class="analysis">
-          <div class="section-title">解析</div>
-          <div class="rich" v-html="renderRich(it.q.analysis)"></div>
+          <div class="section-title toggle"
+            @click="openAnalysis[it.q.id] = !analysisOpen(it.q.id)">
+            {{ analysisOpen(it.q.id) ? '▾ 收起解析' : '▸ 显示解析' }}
+          </div>
+          <div v-show="analysisOpen(it.q.id)" class="rich" v-html="renderRich(it.q.analysis)"></div>
         </div>
 
         <!-- 错题：AI 讲解 -->
@@ -270,6 +280,7 @@ const counts = computed(() => {
 .verdict { margin-top: 10px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }
 .analysis { margin-top: 10px; }
+.toggle { cursor: pointer; user-select: none; }
 .ai-grade { margin-top: 10px; }
 .grade-card { margin-top: 8px; border: 1px solid rgba(240,160,32,.35); background: rgba(240,160,32,.06); border-radius: 10px; padding: 12px 14px; }
 .grade-score { font-size: 15px; margin-bottom: 8px; }

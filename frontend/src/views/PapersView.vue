@@ -37,6 +37,12 @@ onMounted(async () => {
 
 <style scoped>
 .paper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+@media (max-width: 768px) {
+  .paper-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .paper-card { padding: 14px; }
+  .pc-year { font-size: 20px; }
+  .pc-name { font-size: 12.5px; }
+}
 .paper-card { border-radius: 14px; text-align: left; }
 .pc-year { font-size: 26px; font-weight: 800; color: var(--blue); }
 .pc-name { margin: 6px 0 2px; font-size: 14px; }

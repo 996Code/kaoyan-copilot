@@ -114,6 +114,7 @@ textarea.essay:focus { border-color: var(--blue); }
 
 @media (max-width: 768px) {
   .page { padding: 12px 14px 40px; }
+  .th span, .t-head p, .tl, .batch-progress { font-size: 12px !important; }
   .rich { font-size: 14.5px; line-height: 1.7; }
   .opt-row { padding: 9px 10px; gap: 8px; }
   .opt-row .opt-key { width: 22px; height: 22px; font-size: 12px; }
