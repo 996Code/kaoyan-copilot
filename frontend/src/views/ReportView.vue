@@ -221,7 +221,7 @@ const counts = computed(() => {
         <div v-if="it.q.qtype !== 'single_choice'" class="ai-grade">
           <n-button size="small" type="warning" ghost
             :loading="gradeResults[it.q.id]?.loading" @click="doGrade(it.q)">
-            ✍️ AI 批改本题
+            AI 批改本题
           </n-button>
           <template v-if="gradeResults[it.q.id]?.data">
             <div class="grade-card">

@@ -11,6 +11,15 @@ PROJECT_ROOT = BACKEND_DIR.parent
 
 app = FastAPI(title="考研助手", docs_url="/api/docs")
 
+
+@app.middleware("http")
+async def no_cache_html(request, call_next):
+    """HTML 不缓存（发版即生效）；带哈希的静态资源交给浏览器长缓存。"""
+    resp = await call_next(request)
+    if "text/html" in resp.headers.get("content-type", ""):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
 app.include_router(auth.router)
 for r in (
     catalog.router, papers.router, exams.router, practice.router,

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { NButton, NTag } from 'naive-ui'
 import { sse } from '../api'
+import AppIcon from './AppIcon.vue'
 import { renderRich } from '../markdown'
 
 const props = defineProps({
@@ -54,7 +55,7 @@ const collapsed = ref(false)
     <div class="ai-bar">
       <n-button size="tiny" :type="status === 'done' && !collapsed ? 'primary' : 'default'"
         :loading="status === 'streaming'" @click="start">
-        ✨ {{ status === 'streaming' ? '讲解中…' : label }}
+        <AppIcon name="spark" :size="14" /> {{ status === 'streaming' ? '讲解中…' : label }}
       </n-button>
       <n-tag v-if="cached && status === 'done'" size="tiny" type="info" :bordered="false">缓存</n-tag>
     </div>

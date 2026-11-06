@@ -7,6 +7,7 @@ import {
 } from 'naive-ui'
 import { bindGlobalToast, clearToken } from './api'
 import ToastBinder from './components/ToastBinder.vue'
+import AppIcon from './components/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -87,11 +88,11 @@ function logout() {
 
         <!-- 移动端底部 Tab 栏 -->
         <nav v-if="!inExam && !isLogin" class="tabbar">
-          <router-link to="/"><span class="tb-icon">🏠</span>首页</router-link>
-          <router-link to="/review"><span class="tb-icon">🔁</span>复习</router-link>
-          <router-link to="/vocab"><span class="tb-icon">📖</span>单词</router-link>
-          <router-link to="/practice"><span class="tb-icon">✏️</span>练习</router-link>
-          <router-link to="/wrongbook"><span class="tb-icon">📕</span>错题</router-link>
+          <router-link to="/"><AppIcon name="home" :size="22" />首页</router-link>
+          <router-link to="/review"><AppIcon name="review" :size="22" />复习</router-link>
+          <router-link to="/vocab"><AppIcon name="vocab" :size="22" />单词</router-link>
+          <router-link to="/practice"><AppIcon name="practice" :size="22" />练习</router-link>
+          <router-link to="/wrongbook"><AppIcon name="wrong" :size="22" />错题</router-link>
         </nav>
       </n-dialog-provider>
     </n-message-provider>
@@ -132,11 +133,12 @@ function logout() {
     border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
   }
   .tabbar a {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;
-    padding: 7px 0 5px; font-size: 10.5px; color: var(--t3); text-decoration: none;
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 0 6px; font-size: 10.5px; color: var(--t3); text-decoration: none;
+    transition: color .15s;
   }
   .tabbar a.router-link-active { color: var(--blue); font-weight: 600; }
-  .tb-icon { font-size: 19px; line-height: 1; }
+  .tabbar a.router-link-active svg { transform: translateY(-1px); }
 }
 .ghost-btn { border: none; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: #575e72; }
 .ghost-btn:hover { background: rgba(128,128,128,.1); }

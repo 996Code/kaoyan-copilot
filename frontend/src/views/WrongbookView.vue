@@ -151,7 +151,7 @@ onMounted(async () => {
     </n-card>
 
     <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
-    <n-empty v-else-if="!items.length" description="这个视图下没有错题——要么你很强，要么还没开始做题 😏"
+    <n-empty v-else-if="!items.length" description="这个视图下没有错题——要么你很强，要么还没开始做题"
       style="margin:60px 0" />
 
     <div v-for="item in visibleItems" :key="item.question.id" class="wb-card">

@@ -188,14 +188,14 @@ onBeforeUnmount(() => {
       <!-- 顶栏 -->
       <div class="exam-topbar">
         <div class="et-left">
-          <b>{{ paper.name }}</b>
+          <b><span class="pn-full">{{ paper.name }}</span><span class="pn-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }}真题</span></b>
           <span class="muted et-section">{{ sectionName }}</span>
         </div>
         <div class="et-right">
           <span class="autosave muted">
             {{ saving ? '保存中…' : savedAt ? `已保存 ${savedAt}` : '自动保存已开启' }}
           </span>
-          <span class="countdown" :class="{ urgent, overtime: remainingMs <= 0 }">⏳ {{ countdownText }}</span>
+          <span class="countdown" :class="{ urgent, overtime: remainingMs <= 0 }">{{ countdownText }}</span>
           <span class="progress muted">{{ answeredCount }}/{{ flat.length }}</span>
           <n-button type="primary" :loading="submitting" @click="askSubmit">交卷</n-button>
         </div>
@@ -270,7 +270,9 @@ onBeforeUnmount(() => {
 .loading-center { display: flex; justify-content: center; padding-top: 120px; }
 .exam-topbar { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: space-between;
   padding: 10px 20px; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line-soft); }
-.et-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.et-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; max-width: 60%; }
+.et-left b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pn-short { display: none; }
 .et-section { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .et-right { display: flex; align-items: center; gap: 14px; flex: none; }
 .countdown { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; }
@@ -283,10 +285,20 @@ onBeforeUnmount(() => {
   max-width: var(--page-max); margin: 0 auto; padding: 20px; }
 .anscard-close { display: none; }
 .card-fab { display: none; }
+@media (max-width: 768px) {
+  .exam-topbar { padding: 8px 14px; }
+  .et-left { flex: 0 1 auto; max-width: 46%; }
+  .pn-full { display: none; }
+  .pn-short { display: inline; }
+  .et-section { display: none; }
+  .autosave { display: none; }
+  .countdown { font-size: 18px; }
+  .et-right { gap: 10px; }
+}
 @media (max-width: 980px) {
   .exam-body { grid-template-columns: 1fr; padding: 14px; padding-bottom: 84px; }
   .anscard-pane {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    position: fixed !important; left: 0; right: 0; bottom: 0; z-index: 30;
     max-height: 62vh; border-radius: 16px 16px 0 0;
     transform: translateY(105%); transition: transform .25s ease;
     box-shadow: 0 -8px 30px rgba(20,30,60,.15);

@@ -7,6 +7,7 @@ import { renderRich } from '../markdown'
 import QuestionItem from '../components/QuestionItem.vue'
 import GroupMaterial from '../components/GroupMaterial.vue'
 import AiPanel from '../components/AiPanel.vue'
+import AppIcon from '../components/AppIcon.vue'
 
 const message = useMessage()
 
@@ -140,7 +141,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
     <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
 
-    <n-empty v-else-if="!cards.length" description="当前没有到期卡片 🎉 记忆状态良好，去做点新题或背新词吧"
+    <n-empty v-else-if="!cards.length" description="当前没有到期卡片 记忆状态良好，去做点新题或背新词吧"
       style="margin:60px 0">
       <template #extra>
         <div style="display:flex;gap:10px;justify-content:center">
@@ -227,7 +228,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
     <!-- 完成页 -->
     <div v-else-if="finished" class="finish-card">
-      <div style="font-size:44px">🎉</div>
+      <AppIcon name="check" :size="52" style="color:var(--ok)" />
       <h2>本轮复习完成</h2>
       <p class="muted">共 {{ stats.done }} 张 · 答对 {{ stats.correctCount }}（{{ stats.done ? Math.round(stats.correctCount / stats.done * 100) : 0 }}%）</p>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">

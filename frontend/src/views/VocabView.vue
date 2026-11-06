@@ -111,19 +111,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
       <div class="mark-row">
         <n-button size="large" type="error" ghost :loading="submitting" @click="mark('hard')">
-          😖 生 <span class="kbd-hint">(1)</span>
+          生 <span class="kbd-hint">(1)</span>
         </n-button>
         <n-button size="large" :loading="submitting" @click="mark('good')">
-          😐 模糊 <span class="kbd-hint">(2)</span>
+          模糊 <span class="kbd-hint">(2)</span>
         </n-button>
         <n-button size="large" type="success" ghost :loading="submitting" @click="mark('easy')">
-          😎 熟 <span class="kbd-hint">(3)</span>
+          熟 <span class="kbd-hint">(3)</span>
         </n-button>
       </div>
     </div>
 
     <div v-else-if="finished" class="finish-card">
-      <div style="font-size:44px">👏</div>
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto">✓</div>
       <h2>本批 {{ words.length }} 词学完</h2>
       <p class="muted">熟 {{ batchStats.easy }} · 模糊 {{ batchStats.good }} · 生 {{ batchStats.hard }}——生词会很快在复习中心出现</p>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">

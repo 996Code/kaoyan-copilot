@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { NButton, NCard, NEmpty, NTag } from 'naive-ui'
 import { api } from '../api'
+import AppIcon from '../components/AppIcon.vue'
 
 const plan = ref(null)
 const history = ref([])
@@ -44,7 +45,7 @@ const sortedModules = computed(() =>
     <div class="task-grid">
       <div class="task panel" @click="$router.push('/review')">
         <div class="th">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4M3 6h18M21 22l-4-4 4-4M3 18h18"/></svg></div>
+          <div class="ic"><AppIcon name="review" /></div>
           <div><b>复习到期</b><span>FSRS 记忆调度</span></div>
         </div>
         <div class="tv hot">{{ dueTotal }}</div>
@@ -57,7 +58,7 @@ const sortedModules = computed(() =>
 
       <div class="task panel" @click="$router.push('/vocab')">
         <div class="th">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V6a2 2 0 012-2h13v13H6a2 2 0 00-2 2zm0 0a2 2 0 002 2h13"/></svg></div>
+          <div class="ic"><AppIcon name="vocab" /></div>
           <div><b>背新单词</b><span>词频排序 · 每日 {{ plan?.words?.daily_target ?? 50 }}</span></div>
         </div>
         <div class="tv">{{ plan?.words?.remaining_today ?? '—' }}<small>个待背</small></div>
@@ -70,7 +71,7 @@ const sortedModules = computed(() =>
 
       <div v-if="weakTop" class="task panel" @click="$router.push(`/practice?subject=${weakTop.subject_code}&module=${weakTop.module_code}`)">
         <div class="th">
-          <div class="ic warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v6"/></svg></div>
+          <div class="ic warn"><AppIcon name="target" /></div>
           <div><b>专项强化</b><span>最弱模块优先</span></div>
         </div>
         <div class="tv" style="color:var(--warn)">{{ weakTop.accuracy }}%</div>
@@ -82,7 +83,7 @@ const sortedModules = computed(() =>
 
       <div v-if="plan?.mock_suggestion" class="task panel" @click="$router.push(`/papers/${plan.mock_suggestion.subject_code}`)">
         <div class="th">
-          <div class="ic ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></div>
+          <div class="ic ok"><AppIcon name="exam" /></div>
           <div><b>整卷模考</b><span>限时找手感</span></div>
         </div>
         <div class="tv" style="font-size:17px">{{ plan.mock_suggestion.year }} 年<small>{{ plan.mock_suggestion.subject_code === 'gz199' ? '管综' : '英二' }}</small></div>
@@ -156,7 +157,7 @@ const sortedModules = computed(() =>
 .th b { font-size: 14.5px; display: block; }
 .th span { display: block; color: var(--t3); font-size: 11.5px; margin-top: 1px; }
 .ic { width: 38px; height: 38px; border-radius: 9px; background: var(--blue-bg); color: var(--blue); display: flex; align-items: center; justify-content: center; flex: none; }
-.ic svg { width: 18px; height: 18px; }
+.ic svg { width: 19px; height: 19px; }
 .ic.warn { background: var(--warn-bg); color: var(--warn); }
 .ic.ok { background: var(--ok-bg); color: var(--ok); }
 .tv { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
