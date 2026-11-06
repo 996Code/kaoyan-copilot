@@ -165,6 +165,7 @@ function goMore(to) {
   .title { font-size: 15px; }
   .username span.u-name { display: none; }
   .right .ghost-btn { display: none; }  /* 退出在「更多」菜单里 */
+  .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
