@@ -26,7 +26,10 @@ from app.models import (  # noqa: E402
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else PROJECT_ROOT / "data/raw/english2-structured"
+_arg1 = sys.argv[1] if len(sys.argv) > 1 else None
+# argv[1] 形如 "2026-2" 时为增量导入单套；否则视为数据根目录（向后兼容）
+ONLY = _arg1 if _arg1 and re.fullmatch(r"\d{4}-2", _arg1) else None
+DATA_ROOT = Path(_arg1) if _arg1 and ONLY is None else PROJECT_ROOT / "data/raw/english2-structured"
 ASSET_ROOT = PROJECT_ROOT / "data/assets"
 
 SOURCE_REPO = "LIziak112/structured-kaoyan-english"
@@ -239,16 +242,19 @@ def import_paper(session: object, modules: dict, set_dir: Path) -> tuple[int, fl
 
 
 def main() -> None:
+    only = ONLY  # 增量模式：只导入指定套（如 2026-2），不重置旧数据
     set_dirs = sorted(
         p for p in DATA_ROOT.joinpath("data").iterdir()
         if p.is_dir() and re.fullmatch(r"\d{4}-2", p.name)
+        and (only is None or p.name == only)
     )
     print(f"发现英语二真题 {len(set_dirs)} 套: {[p.name for p in set_dirs]}")
 
     with SessionLocal() as session:
         modules = ensure_catalog(session)
         subject_id = modules["cloze"].subject_id
-        reset_en2(session, subject_id)
+        if only is None:
+            reset_en2(session, subject_id)
 
         for set_dir in set_dirs:
             n, score = import_paper(session, modules, set_dir)

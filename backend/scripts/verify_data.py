@@ -42,10 +42,10 @@ def main() -> None:
 
         print("== 英二对账 ==")
         for code, expect_q, expect_g in [
-            ("cloze", 320, 16),        # 16 套 × 20 空
-            ("reading", 400, 80),      # 16 套 × (20 PartA + 5 PartB) 题组 16×(4+1)
-            ("translation", 16, 16),
-            ("writing", 32, 32),
+            ("cloze", 340, 17),        # 16 套 × 20 空
+            ("reading", 425, 85),      # 16 套 × (20 PartA + 5 PartB) 题组 16×(4+1)
+            ("translation", 17, 17),
+            ("writing", 34, 34),
         ]:
             m = s.scalar(select(Module).where(Module.code == code))
             if m is None:
@@ -57,9 +57,9 @@ def main() -> None:
             check(f"{code} 题组数", g, expect_g)
 
         en2_sub = s.scalar(select(Subject).where(Subject.code == "en2"))
-        check("英二试卷数", s.scalar(select(func.count(Paper.id)).where(Paper.subject_id == en2_sub.id)), 16)
-        check("英二分区数", s.scalar(select(func.count(PaperSection.id)).join(Paper).where(Paper.subject_id == en2_sub.id)), 16 * 6)
-        check("英二卷题关联", s.scalar(select(func.count(PaperQuestion.id)).join(PaperSection).join(Paper).where(Paper.subject_id == en2_sub.id)), 768)
+        check("英二试卷数", s.scalar(select(func.count(Paper.id)).where(Paper.subject_id == en2_sub.id)), 17)
+        check("英二分区数", s.scalar(select(func.count(PaperSection.id)).join(Paper).where(Paper.subject_id == en2_sub.id)), 17 * 6)
+        check("英二卷题关联", s.scalar(select(func.count(PaperQuestion.id)).join(PaperSection).join(Paper).where(Paper.subject_id == en2_sub.id)), 816)
 
         print("== 答案与解析完整性 ==")
         check("answer 为空", s.scalar(select(func.count(Question.id)).where(Question.answer.is_(None))), 0)
