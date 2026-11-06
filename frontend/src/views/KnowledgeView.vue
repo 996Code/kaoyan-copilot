@@ -189,7 +189,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .cat:hover { border-color:var(--blue); }
 .cat-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
 .cat-top b { font-size:14.5px; }
-.cat-num { font-size:12px; color:var(--t3); font-variant-numeric:tabular-nums; }
+.cat-num { font-size:12px; color:var(--t3); font-variant-numeric:tabular-nums; white-space:nowrap; margin-left:8px; }
 .cat-foot { display:flex; justify-content:space-between; font-size:12px; margin-top:8px; }
 .flow-head { display:flex; align-items:center; gap:12px; margin:6px 0 12px; }
 .nav-pos { font-size:14px; font-weight:600; }

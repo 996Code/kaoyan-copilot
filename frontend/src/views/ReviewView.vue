@@ -157,7 +157,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       </div>
 
       <div v-if="forecast.length" class="fc panel">
-        <div class="fc-title">未来 7 天复习压力</div>
+        <div class="fc-head">
+          <span class="fc-title">未来 7 天复习压力</span>
+          <span class="fc-legend muted"><i class="seg wr"></i>错题<i class="seg wd"></i>单词<i class="seg kn"></i>知识</span>
+        </div>
         <div class="fc-bars">
           <div v-for="d in forecast" :key="d.date" class="fc-col" :title="`${d.date}：错题${d.wrong_question} 单词${d.word} 知识${d.knowledge}`">
             <div class="fc-stack">
@@ -168,9 +171,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             <span class="fc-v">{{ d.total }}</span>
             <span class="fc-d">{{ d.date.slice(3) }}</span>
           </div>
-        </div>
-        <div class="fc-legend muted">
-          <span><i class="seg wr"></i>错题</span><span><i class="seg wd"></i>单词</span><span><i class="seg kn"></i>知识</span>
         </div>
       </div>
     </div>
@@ -310,17 +310,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   .fc { padding: 10px 12px; }
   .fc-bars { height: 56px; }
 }
-.fc { display:flex; align-items:center; gap:14px; padding:12px 16px; margin:10px 0 14px; border-radius:var(--r-card); }
-.fc-title { font-size:13px; font-weight:600; color:var(--t2); writing-mode:vertical-lr; letter-spacing:2px; }
-.fc-bars { flex:1; display:flex; gap:8px; height:72px; }
+.fc { padding:12px 14px; margin:10px 0 14px; border-radius:var(--r-card); }
+.fc-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.fc-title { font-size:13px; font-weight:600; color:var(--t2); }
+.fc-legend { display:flex; gap:8px; font-size:11px; align-items:center; }
+.fc-legend .seg { width:9px; height:9px; display:inline-block; border-radius:2px; margin-right:3px; vertical-align:-1px; }
+.fc-legend .seg + .seg { margin-left:6px; }
+.fc-bars { display:flex; gap:8px; height:72px; }
 .fc-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
 .fc-stack { flex:1; width:58%; display:flex; flex-direction:column-reverse; border-radius:4px 4px 0 0; overflow:hidden; }
 .seg { display:block; width:100%; }
 .seg.wr { background:var(--blue); } .seg.wd { background:var(--ok); } .seg.kn { background:var(--warn); }
 .fc-v { font-size:11px; color:var(--t2); font-variant-numeric:tabular-nums; }
 .fc-d { font-size:10px; color:var(--t3); }
-.fc-legend { display:flex; gap:10px; font-size:11px; }
-.fc-legend .seg { width:9px; height:9px; display:inline-block; border-radius:2px; margin-right:3px; vertical-align:-1px; }
+
 .review-card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
 .rc-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
 .feedback { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line-soft); }

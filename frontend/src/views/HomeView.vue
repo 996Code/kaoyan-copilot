@@ -269,7 +269,7 @@ const sortedModules = computed(() =>
 .tr-bar-wrap { flex: 1; width: 62%; display: flex; align-items: flex-end; }
 .tr-bar { width: 100%; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--blue-soft), var(--blue)); min-height: 3px; }
 .tr-bar-v { font-size: 10.5px; color: var(--t2); font-variant-numeric: tabular-nums; }
-.tr-bar-d { font-size: 9.5px; color: var(--t3); }
+.tr-bar-d { font-size: 9px; color: var(--t3); white-space: nowrap; }
 
 .data-tabs { display: none; }
 
