@@ -1,0 +1,15 @@
+{
+  "name": "考研助手 · 40 天冲刺",
+  "short_name": "考研助手",
+  "description": "199 管综 + 英语二：真题模考、FSRS 复习、AI 讲解批改",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7fb",
+  "theme_color": "#2f6fed",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

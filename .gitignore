@@ -1,0 +1,20 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# 环境与本地配置
+.env
+
+# 外部数据快照（版权考虑不进版本库）
+data/raw/
+
+# 原卷切片/图表（可由导入脚本从 data/raw 重建，见 docs/RUN.md）
+data/assets/
+
+# 前端
+frontend/node_modules/
+frontend/dist/
+
+# 系统
+.DS_Store
