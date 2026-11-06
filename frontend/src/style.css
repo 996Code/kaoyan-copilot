@@ -41,6 +41,8 @@ body {
 /* 题面富文本（markdown+latex+svg） */
 .rich { line-height: 1.75; font-size: 15px; word-break: break-word; color: var(--t1); }
 .rich p { margin: 0.35em 0; }
+.rich > p:first-child { margin-top: 0; }
+.rich > p:last-child { margin-bottom: 0; }
 .rich blockquote {
   margin: 0.5em 0; padding: 6px 14px; border-left: 3px solid var(--line);
   background: rgba(128, 128, 128, 0.05); border-radius: 4px; white-space: pre-wrap;

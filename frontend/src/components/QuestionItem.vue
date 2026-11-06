@@ -67,7 +67,7 @@ const wordCount = computed(() =>
 
 <style scoped>
 .qitem { font-size: 15px; }
-.stem-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
+.stem-wrap { display: flex; gap: 8px; margin-bottom: 8px; align-items: baseline; }
 .qnum { font-weight: 700; flex: none; }
 .subjective { margin-top: 6px; }
 .readonly-essay { white-space: pre-wrap; background: rgba(128,128,128,.05); border: 1px dashed #d5d9e4; border-radius: 10px; padding: 12px 14px; min-height: 60px; }
