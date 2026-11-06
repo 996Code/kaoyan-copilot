@@ -19,6 +19,7 @@ const result = ref(null) // answer_question 返回
 const revealed = ref(false) // 单词卡翻面
 const ratingWord = ref(false)
 const stats = reactive({ done: 0, correctCount: 0 })
+const cardFilter = ref('')  // ''=全部 / wrong_question / word
 
 const card = computed(() => cards.value[idx.value] || null)
 const finished = computed(() => !loading.value && cards.value.length > 0 && idx.value >= cards.value.length)
@@ -27,7 +28,8 @@ const dueLeft = ref({ wrong_question: 0, word: 0 })
 async function load() {
   loading.value = true
   try {
-    const data = await api('/api/review/queue?limit=40')
+    const qp = cardFilter.value ? `&card_type=${cardFilter.value}` : ''
+    const data = await api(`/api/review/queue?limit=40${qp}`)
     cards.value = data.cards
     dueLeft.value = data.due_counts
     // 恢复上次复习到的位置（队列变化时自动收敛到有效范围）
@@ -137,6 +139,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <p class="muted" style="margin:0">
         到期卡片按 FSRS 记忆曲线调度；答对自动推迟下次复习，答错加快重现。
       </p>
+      <div class="filter-bar">
+        <n-button size="small" :type="cardFilter === '' ? 'primary' : 'default'" @click="cardFilter = ''; load()">
+          全部
+        </n-button>
+        <n-button size="small" :type="cardFilter === 'wrong_question' ? 'primary' : 'default'" @click="cardFilter = 'wrong_question'; load()">
+          错题卡 {{ dueLeft.wrong_question }}
+        </n-button>
+        <n-button size="small" :type="cardFilter === 'word' ? 'primary' : 'default'" @click="cardFilter = 'word'; load()">
+          单词卡 {{ dueLeft.word }}
+        </n-button>
+      </div>
     </div>
 
     <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
@@ -241,6 +254,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <style scoped>
 .pstats { display:flex; gap:18px; font-size:13px; color:var(--t3); margin-bottom:10px; }
+.filter-bar { display:flex; gap:8px; margin:12px 0 4px; }
 .review-card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
 .rc-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
 .feedback { margin-top:14px; padding-top:12px; border-top:1px dashed var(--line-soft); }

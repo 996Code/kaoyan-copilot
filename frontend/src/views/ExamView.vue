@@ -298,12 +298,12 @@ onBeforeUnmount(() => {
 @media (max-width: 980px) {
   .exam-body { grid-template-columns: 1fr; padding: 14px; padding-bottom: 84px; }
   .anscard-pane {
-    position: fixed !important; left: 0; right: 0; bottom: 0; z-index: 30;
-    max-height: 62vh; border-radius: 16px 16px 0 0;
-    transform: translateY(105%); transition: transform .25s ease;
+    position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important; z-index: 30;
+    max-height: 62vh !important; border-radius: 16px 16px 0 0;
+    transform: translateY(105%) !important; transition: transform .25s ease;
     box-shadow: 0 -8px 30px rgba(20,30,60,.15);
   }
-  .anscard-pane.open { transform: translateY(0); }
+  .anscard-pane.open { transform: translateY(0) !important; }
   .anscard-close { display: block; text-align: center; font-size: 13px; color: var(--blue);
     padding: 8px 0 4px; cursor: pointer; }
   .card-fab {
