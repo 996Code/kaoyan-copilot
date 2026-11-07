@@ -77,9 +77,9 @@ def review(
     return row
 
 
-def apply_question_answer(session: Session, user_id: int, question_id: int, correct: bool) -> None:
+def apply_question_answer(session: Session, user_id: int, question_id: int, correct: bool, source: str = "practice") -> None:
     """练习/模考判分后的联动：错→Again（建卡），对→Good（有卡才推进）。"""
     if correct:
-        review(session, user_id, "wrong_question", question_id, RATING_GOOD, "practice", create_if_missing=False)
+        review(session, user_id, "wrong_question", question_id, RATING_GOOD, source, create_if_missing=False)
     else:
-        review(session, user_id, "wrong_question", question_id, RATING_AGAIN, "practice", create_if_missing=True)
+        review(session, user_id, "wrong_question", question_id, RATING_AGAIN, source, create_if_missing=True)

@@ -2,7 +2,7 @@ import MarkdownIt from 'markdown-it'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 
-const md = new MarkdownIt({ html: true, linkify: false, typographer: false })
+const md = new MarkdownIt({ html: false, linkify: false, typographer: false })
 
 /** markdown + 行内/块级 LaTeX 公式 -> HTML（公式先占位再渲染，避免下划线等被 md 吞掉） */
 export function renderRich(text) {
@@ -12,7 +12,7 @@ export function renderRich(text) {
     try {
       math.push(katex.renderToString(tex, { displayMode: display, throwOnError: false }))
     } catch {
-      math.push(`<code>${tex}</code>`)
+      math.push(`<code>${md.utils.escapeHtml(tex)}</code>`)
     }
     return `@@MATH${math.length - 1}@@`
   }

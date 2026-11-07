@@ -179,19 +179,33 @@ def main() -> None:
     spec.loader.exec_module(m)
     global CARDS
     CARDS = CARDS + m.EXTRA
-    from sqlalchemy import delete
-
     from app.core.db import SessionLocal
     from app.models.knowledge import KnowledgeCard
+    from sqlalchemy import select
 
     with SessionLocal() as s:
-        s.execute(delete(KnowledgeCard))
+        # upsert：按 (subject, category, title) 匹配——只增改不删，保住用户 FSRS 学习进度
+        existing = {
+            (c.subject_code, c.category, c.title): c
+            for c in s.scalars(select(KnowledgeCard)).all()
+        }
+        added = updated = 0
         for i, (sub, mod, cat, title, back) in enumerate(CARDS, 1):
-            s.add(KnowledgeCard(
-                subject_code=sub, module_name=mod, category=cat,
-                title=title, back=back, sort=i,
-            ))
+            row = existing.get((sub, cat, title))
+            if row is None:
+                s.add(KnowledgeCard(
+                    subject_code=sub, module_name=mod, category=cat,
+                    title=title, back=back, sort=i,
+                ))
+                added += 1
+            elif row.back != back:
+                row.back = back
+                row.module_name = mod
+                updated += 1
         s.commit()
+        from sqlalchemy import func
+        total = s.scalar(select(func.count(KnowledgeCard.id)))
+        print(f"新增 {added}、更新 {updated}，库里共 {total} 张（用户学习进度不受影响）")
         print(f"已写入 {len(CARDS)} 张知识卡：数学{sum(1 for c in CARDS if c[1]==M)}、"
               f"逻辑{sum(1 for c in CARDS if c[1]==L)}、论效/论说{sum(1 for c in CARDS if c[1]==W)}、"
               f"英语{sum(1 for c in CARDS if c[0]=='en2')}")

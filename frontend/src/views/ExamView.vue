@@ -165,7 +165,10 @@ async function doSubmit(auto = false) {
   } catch (e) {
     dialog.error({ title: '交卷失败', content: String(e.message || e) })
     submitting.value = false
-    if (auto) clockTimer = setInterval(tick, 1000)
+    if (auto) {
+      clearInterval(clockTimer)
+      clockTimer = setInterval(tick, 1000)
+    }
   }
 }
 

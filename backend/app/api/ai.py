@@ -222,7 +222,7 @@ async def grade(body: GradeIn, user=Depends(current_user), session: Session = De
 
     # 分数写入答题记录（主观题得分覆盖）
     try:
-        answer_row.score = min(float(parsed.get("score", 0)), float(q.score or 0))
+        answer_row.score = max(0.0, min(float(parsed.get("score", 0)), float(q.score or 0)))
     except (TypeError, ValueError):
         pass
     session.add(

@@ -255,6 +255,26 @@ def main() -> None:
         subject_id = modules["cloze"].subject_id
         if only is None:
             reset_en2(session, subject_id)
+        else:
+            # 增量幂等：该年份已有卷则先删（题被作答引用时不删，跳过并提示）
+            from app.models import AnswerRecord as _AR
+
+            old = session.scalar(select(Paper).where(Paper.subject_id == subject_id, Paper.year == int(only.split("-")[0])))
+            if old is not None:
+                qids = select(Question.id).join(PaperQuestion, PaperQuestion.question_id == Question.id).join(PaperSection, PaperSection.id == PaperQuestion.section_id).where(PaperSection.paper_id == old.id)
+                used = session.scalar(select(_AR.id).where(_AR.question_id.in_(qids)).limit(1))
+                if used:
+                    print(f"  [skip] {only} 已存在且有作答记录，跳过（如需重导请先清理该卷作答）")
+                    session.rollback()
+                    return
+                print(f"  [reset] {only} 已存在且无作答，重建该套")
+                sec_ids = select(PaperSection.id).where(PaperSection.paper_id == old.id)
+                pq_ids = select(PaperQuestion.question_id).where(PaperQuestion.section_id.in_(sec_ids))
+                session.execute(delete(PaperQuestion).where(PaperQuestion.section_id.in_(sec_ids)))
+                session.execute(delete(PaperSection).where(PaperSection.paper_id == old.id))
+                session.execute(delete(Question).where(Question.id.in_(pq_ids)))
+                session.execute(delete(Paper).where(Paper.id == old.id))
+                session.commit()
 
         for set_dir in set_dirs:
             n, score = import_paper(session, modules, set_dir)

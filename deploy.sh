@@ -48,10 +48,24 @@ else
   echo "==> 提示：data/assets 不存在，原卷切片/图表将不可用（不影响答题判分）"
 fi
 
+# 管理员凭据：从 .env 读取并注入容器（避免使用仓库默认值建号）
+AUTH_U="${AUTH_USERNAME:-}"
+AUTH_P="${AUTH_PASSWORD:-}"
+if [ -z "$AUTH_U" ] && [ -f "$ENV_FILE" ]; then
+  AUTH_U=$(grep -E '^AUTH_USERNAME=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"' || true)
+  AUTH_P=$(grep -E '^AUTH_PASSWORD=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"' || true)
+fi
+if [ -z "$AUTH_U" ] || [ -z "$AUTH_P" ]; then
+  echo "错误：缺少 AUTH_USERNAME/AUTH_PASSWORD（backend/.env 或环境变量），拒绝以默认凭据部署" >&2
+  exit 1
+fi
+
 echo "==> 启动容器（端口 $PORT）"
 docker run -d --name "$NAME" \
   -p "${PORT}:28080" \
   -e DATABASE_URL="$DB_URL" \
+  -e AUTH_USERNAME="$AUTH_U" \
+  -e AUTH_PASSWORD="$AUTH_P" \
   --add-host=host.docker.internal:host-gateway \
   "${VOL_ARGS[@]}" \
   --restart unless-stopped \

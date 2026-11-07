@@ -110,7 +110,9 @@ def today(user: User = Depends(current_user), session: Session = Depends(get_ses
                 select(ReviewCard.id).where(ReviewCard.user_id == user.id, ReviewCard.card_type == ct, ReviewCard.due <= now)
             ).all()
         )
-    total_cards = len(session.scalars(select(ReviewCard.id)).all())
+    total_cards = len(
+        session.scalars(select(ReviewCard.id).where(ReviewCard.user_id == user.id)).all()
+    )
 
     # --- 词汇进度 ---
     midnight = _local_midnight_utc()

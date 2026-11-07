@@ -29,12 +29,6 @@ def overview(user: User = Depends(current_user), session: Session = Depends(get_
         .order_by(KnowledgeCard.subject_code, KnowledgeCard.module_name, func.min(KnowledgeCard.sort))
     ).all()
 
-    learned = {
-        (r.ref_id): None
-        for r in session.scalars(
-            select(ReviewCard).where(ReviewCard.user_id == user.id, ReviewCard.card_type == "knowledge")
-        ).all()
-    }
     learned_ids = set(
         session.scalars(
             select(ReviewCard.ref_id).where(
@@ -58,6 +52,7 @@ def overview(user: User = Depends(current_user), session: Session = Depends(get_
             c.id for c in session.scalars(
                 select(KnowledgeCard).where(
                     KnowledgeCard.subject_code == sub,
+                    KnowledgeCard.module_name == mod,
                     KnowledgeCard.category == cat,
                 )
             ).all()

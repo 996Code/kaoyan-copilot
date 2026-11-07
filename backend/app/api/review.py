@@ -178,6 +178,8 @@ def answer_question(
     if row is None or row.user_id != user.id or row.card_type != "wrong_question":
         raise HTTPException(status_code=404, detail="错题卡不存在")
     q = session.get(Question, row.ref_id)
+    if q is None:
+        raise HTTPException(status_code=410, detail="该题已失效（题库重置），卡片将在下轮清理")
     correct = (
         body.answer is not None
         and str(body.answer).strip().upper() == str(q.answer).strip().upper()

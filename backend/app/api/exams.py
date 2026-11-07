@@ -213,13 +213,15 @@ def submit(exam_id: int, body: AnswersIn, user: User = Depends(current_user), se
             obj_total += float(q.score or 0)
             correct = your is not None and str(your).strip().upper() == str(q.answer).strip().upper()
             earned = float(q.score or 0) if correct else 0.0
-            from app.core.srs import apply_question_answer
+            # 未作答：判 0 分但不算「错」（不进错题本、不建 FSRS 卡）
+            if your is not None:
+                from app.core.srs import apply_question_answer
 
-            apply_question_answer(session, user.id, q.id, bool(correct))
-            if correct is False:
-                from app.api.wrongbook import record_wrong
+                apply_question_answer(session, user.id, q.id, bool(correct), source="exam")
+                if correct is False:
+                    from app.api.wrongbook import record_wrong
 
-                record_wrong(session, user.id, q.id)
+                    record_wrong(session, user.id, q.id)
             obj_score += earned
             entry["is_correct"] = correct
             entry["score_earned"] = earned

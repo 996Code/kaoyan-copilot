@@ -86,14 +86,15 @@ def check(body: CheckIn, user: User = Depends(current_user), session: Session = 
             body.answer is not None
             and str(body.answer).strip().upper() == str(q.answer).strip().upper()
         )
-        # FSRS 联动：答对推进记忆，答错建卡+Again
-        from app.core.srs import apply_question_answer
+        if body.answer is not None:
+            # FSRS 联动：答对推进记忆，答错建卡+Again（空答不算错）
+            from app.core.srs import apply_question_answer
 
-        apply_question_answer(session, user.id, q.id, correct)
-        if correct is False:
-            from app.api.wrongbook import record_wrong
+            apply_question_answer(session, user.id, q.id, correct)
+            if correct is False:
+                from app.api.wrongbook import record_wrong
 
-            record_wrong(session, user.id, q.id)
+                record_wrong(session, user.id, q.id)
 
     session.add(
         AnswerRecord(
