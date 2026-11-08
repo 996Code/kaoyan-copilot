@@ -188,6 +188,7 @@ def submit(exam_id: int, body: AnswersIn, user: User = Depends(current_user), se
         raise HTTPException(status_code=409, detail="考试不存在或已交卷")
 
     _save_answers(session, rec, body.answers or {})
+    session.flush()  # autoflush 已关闭：判分前必须显式落库，否则查询看不到刚保存的作答
 
     questions = _paper_questions(session, rec.paper_id)
     answer_rows = {
