@@ -32,6 +32,26 @@ HOST_ASSETS_DIR=/data/kaoyan-copilot/data/assets NETWORK=llm-modeler_default POR
 
 部署流程：停掉旧容器 → 构建镜像（npm 淘宝源/pip 清华源）→ 启动新容器 → 健康检查。
 数据库连接读 backend/.env（localhost 自动转 host.docker.internal；容器网络内直接写容器名）。
+
+### 子路径反代（nginx /kaoyan/ 前缀）
+
+系统原生支持部署子路径：backend/.env 加 `APP_PREFIX=/kaoyan`，部署时传 `APP_PREFIX=/kaoyan VITE_BASE=/kaoyan/`，
+nginx 99 端口 conf 增加（保留前缀透传 + SSE 支持）：
+
+```nginx
+location ^~ /kaoyan/ {
+    proxy_pass http://127.0.0.1:28080/kaoyan/;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_buffering off;
+    proxy_read_timeout 300s;
+    proxy_http_version 1.1;
+    proxy_set_header Connection '';
+}
+```
+
+线上：https://code.996code.top:99/kaoyan/ 。注意部署时 APP_PREFIX/VITE_BASE 必须成对传（deploy.sh 会把空 APP_PREFIX 注入容器覆盖镜像默认值）。
 真题数据迁移：本地 `docker exec chatbi-postgres pg_dump -U root -d kaoyan --no-owner > dump.sql`，服务器 `docker exec -i <pg容器> psql -U <user> -d kaoyan < dump.sql`。
 
 数据库连接优先级：环境变量 `DATABASE_URL` > `backend/.env` 的 `DATABASE_URL`（线上 PG 配这里）> 兜底 `host.docker.internal:5432`。`.env` 里写 `localhost` 会自动转换为 `host.docker.internal`（容器内 localhost 指向容器自身）。
