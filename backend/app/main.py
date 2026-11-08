@@ -6,8 +6,10 @@ from fastapi.staticfiles import StaticFiles
 from app.api import admin, ai, auth, catalog, exams, knowledge, papers, plan, practice, review, vocab, wrongbook
 from app.core.auth import current_user
 
+# 本地源码布局: <root>/backend/app/main.py -> BACKEND_DIR=backend, PROJECT_ROOT=root
+# 容器布局:     /app/app/main.py          -> BACKEND_DIR=/app, PROJECT_ROOT=/app（frontend 在其中）
 BACKEND_DIR = Path(__file__).resolve().parents[1]
-PROJECT_ROOT = BACKEND_DIR.parent
+PROJECT_ROOT = BACKEND_DIR if (BACKEND_DIR / "frontend").is_dir() else BACKEND_DIR.parent
 
 app = FastAPI(title="考研助手", docs_url="/api/docs")
 
