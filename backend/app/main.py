@@ -35,9 +35,9 @@ def health():
 
 
 # 原卷切片 / 作文图表（注意：/assets 留给前端构建产物，这里用 /paper-assets 避免路由冲突）
+# 目录可能由容器运行时挂载提供（晚于/早于 import 均有可能），故无条件挂载 + check_dir=False
 assets_dir = PROJECT_ROOT / "data/assets"
-if assets_dir.is_dir():
-    app.mount("/paper-assets", StaticFiles(directory=assets_dir), name="paper-assets")
+app.mount("/paper-assets", StaticFiles(directory=assets_dir, check_dir=False), name="paper-assets")
 
 # 前端构建产物（生产模式同源部署）
 dist_dir = PROJECT_ROOT / "frontend/dist"

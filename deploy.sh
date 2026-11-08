@@ -41,11 +41,12 @@ echo "==> 停掉旧容器（若有）"
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 
 VOL_ARGS=()
-if [ -d "$(pwd)/data/assets" ]; then
-  VOL_ARGS+=(-v "$(pwd)/data/assets:/app/data/assets:ro")
-  echo "==> 挂载 data/assets（原卷切片/图表）"
+HOST_ASSETS="${HOST_ASSETS_DIR:-$(pwd)/data/assets}"
+if [ -d "$HOST_ASSETS" ]; then
+  VOL_ARGS+=(-v "$HOST_ASSETS:/app/data/assets:ro")
+  echo "==> 挂载原卷切片/图表: $HOST_ASSETS"
 else
-  echo "==> 提示：data/assets 不存在，原卷切片/图表将不可用（不影响答题判分）"
+  echo "==> 提示：$HOST_ASSETS 不存在，原卷切片/图表将不可用（不影响答题判分）"
 fi
 
 # 管理员凭据：从 .env 读取并注入容器（避免使用仓库默认值建号）
@@ -60,8 +61,16 @@ if [ -z "$AUTH_U" ] || [ -z "$AUTH_P" ]; then
   exit 1
 fi
 
+NETWORK="${NETWORK:-}"
+NET_ARGS=()
+if [ -n "$NETWORK" ]; then
+  NET_ARGS+=(--network "$NETWORK")
+  echo "==> 加入 Docker 网络: $NETWORK"
+fi
+
 echo "==> 启动容器（端口 $PORT）"
 docker run -d --name "$NAME" \
+  "${NET_ARGS[@]}" \
   -p "${PORT}:28080" \
   -e DATABASE_URL="$DB_URL" \
   -e AUTH_USERNAME="$AUTH_U" \
