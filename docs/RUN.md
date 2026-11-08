@@ -11,7 +11,7 @@ cd kaoyan-copilot/src
 
 # 写 backend/.env（数据库指向现成 PG 容器；按实际改账号密码/地址）
 cat > backend/.env <<'EOF'
-DATABASE_URL=postgresql+psycopg://<user>:<pass>@<pg地址>:5432/kaoyan
+DATABASE_URL=postgresql+psycopg://llm:<pass>@postgres:5432/kaoyan
 AUTH_USERNAME=admin
 AUTH_PASSWORD=<你的密码>
 EXAM_DATE=2026-12-19
@@ -53,6 +53,10 @@ location ^~ /kaoyan/ {
 
 线上：https://code.996code.top:99/kaoyan/ 。注意部署时 APP_PREFIX/VITE_BASE 必须成对传（deploy.sh 会把空 APP_PREFIX 注入容器覆盖镜像默认值）。
 真题数据迁移：本地 `docker exec chatbi-postgres pg_dump -U root -d kaoyan --no-owner > dump.sql`，服务器 `docker exec -i <pg容器> psql -U <user> -d kaoyan < dump.sql`。
+
+### 服务器 PG 归一（2026-11-09）
+
+服务器只有一个 PG：容器 `postgres`（pgvector/pgvector:pg16，双网络 base_996_network + llm-modeler_default，端口 5432，数据卷 /data/postgres/data）。承载全部库：new_api / accounting_assistant / sub2api / llm_modeler / kaoyan。角色：postgres（new-api 等）、llm（llm_modeler + kaoyan，密码见 llm-modeler 原配置）。旧的 postgres:15-alpine 与 llm-modeler-postgres 已删除（备份 dump 在 /data/postgres-migration-backup/）。
 
 数据库连接优先级：环境变量 `DATABASE_URL` > `backend/.env` 的 `DATABASE_URL`（线上 PG 配这里）> 兜底 `host.docker.internal:5432`。`.env` 里写 `localhost` 会自动转换为 `host.docker.internal`（容器内 localhost 指向容器自身）。
 
