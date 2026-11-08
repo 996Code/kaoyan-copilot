@@ -1,5 +1,11 @@
 const TOKEN_KEY = 'kaoyan_token'
 
+// 部署子路径（vite base 注入），所有请求统一加前缀
+const BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+function prefixed(path) {
+  return path.startsWith('/') ? BASE + path : BASE + '/' + path
+}
+
 // 全局错误提示（5xx / 网络错误在这里兜底提示；4xx 由页面自行处理业务含义）
 let globalMessage = null
 export function bindGlobalToast(messageApi) {
@@ -29,7 +35,7 @@ export class ApiError extends Error {
 export async function api(path, { method = 'GET', body } = {}) {
   let res
   try {
-    res = await fetch(path, {
+    res = await fetch(prefixed(path), {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +66,7 @@ export async function api(path, { method = 'GET', body } = {}) {
 
 /** SSE 消费：onEvent 收到每个 data JSON 对象 */
 export async function sse(path, { onEvent } = {}) {
-  const res = await fetch(path, { headers: { Authorization: `Bearer ${getToken()}` } })
+  const res = await fetch(prefixed(path), { headers: { Authorization: `Bearer ${getToken()}` } })
   if (res.status === 401) {
     clearToken()
     location.hash = '#/login'

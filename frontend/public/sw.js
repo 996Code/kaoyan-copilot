@@ -1,6 +1,6 @@
 /* 考研助手 Service Worker：静态资源缓存（离线壳），API 永远走网络 */
 const CACHE = 'kaoyan-v2'
-const SHELL = ['/', '/manifest.webmanifest', '/icon.svg']
+const SHELL = ['./', './manifest.webmanifest', './icon.svg']
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}))

@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     llm_base_url: str = ""
     llm_api_key: str = ""
     llm_model: str = ""
+    app_prefix: str = ""
     exam_date: str = "2026-12-19"
     words_per_day: int = 50
 

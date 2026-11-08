@@ -34,8 +34,9 @@ case "$DB_URL" in
     ;;
 esac
 
-echo "==> 构建镜像 $NAME（国内源：npm 淘宝 / pip 清华）"
-docker build -t "$NAME" .
+VITE_BASE="${VITE_BASE:-/}"
+echo "==> 构建镜像 $NAME（国内源：npm 淘宝 / pip 清华，base=$VITE_BASE）"
+docker build --build-arg VITE_BASE="$VITE_BASE" -t "$NAME" .
 
 echo "==> 停掉旧容器（若有）"
 docker rm -f "$NAME" >/dev/null 2>&1 || true
@@ -75,6 +76,7 @@ docker run -d --name "$NAME" \
   -e DATABASE_URL="$DB_URL" \
   -e AUTH_USERNAME="$AUTH_U" \
   -e AUTH_PASSWORD="$AUTH_P" \
+  -e APP_PREFIX="${APP_PREFIX:-}" \
   --add-host=host.docker.internal:host-gateway \
   "${VOL_ARGS[@]}" \
   --restart unless-stopped \

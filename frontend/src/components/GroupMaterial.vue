@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import RichText from './RichText.vue'
 import { splitCloze, isClozeBlank, clozeNum } from '../markdown'
 import { api } from '../api'
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') + '/'
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -95,7 +96,7 @@ const matSegments = computed(() => {
     </div>
 
     <!-- 作文图表 -->
-    <img v-if="group.material_image" :src="'/paper-assets/' + group.material_image"
+    <img v-if="group.material_image" :src="base + 'paper-assets/' + group.material_image"
       :alt="group.title || '图表'" class="chart-img" />
 
     <!-- 查词弹层 -->

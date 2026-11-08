@@ -10,7 +10,8 @@ app.use(createPinia())
 app.use(router)
 app.mount('#app')
 
-// PWA Service Worker
+// PWA Service Worker（子路径部署时 scope 自动限定在 base 下）
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {})
+  const swUrl = (import.meta.env.BASE_URL || '/') + 'sw.js'
+  navigator.serviceWorker.register(swUrl).catch(() => {})
 }

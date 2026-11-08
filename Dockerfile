@@ -6,6 +6,8 @@ RUN npm config set registry https://registry.npmmirror.com
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
+ARG VITE_BASE=/
+ENV VITE_BASE=$VITE_BASE
 RUN npm run build
 
 # ---------- 阶段 2：运行镜像（后端 + 前端产物，单容器） ----------
@@ -23,6 +25,8 @@ COPY --from=frontend /build/dist ./frontend/dist
 
 # 数据库连接由运行时环境变量注入（deploy.sh 自动读 backend/.env，也可 -e 覆盖）
 ENV DATABASE_URL=postgresql+psycopg://root:root@host.docker.internal:5432/kaoyan
+# 反代子路径（nginx /kaoyan/ -> 本服务时设为 /kaoyan）
+ENV APP_PREFIX=/kaoyan
 # 原卷切片/图表体积大且涉版权，不入镜像；部署时用 -v 挂载到 /app/data/assets
 
 EXPOSE 28080
