@@ -2,11 +2,37 @@
 
 ## 容器化部署（推荐，一键）
 
+### 服务器首次部署
+
 ```bash
-./deploy.sh
-# 完整流程：停掉旧容器 → 构建镜像（npm 淘宝源/pip 清华源）→ 启动新容器 → 健康检查
-# 端口 28080；单容器跑「FastAPI + 前端产物」，数据库用现成的 PG（不在容器内）
+# 服务器上（需已配置 GitHub 私钥）
+cd /data && git clone git@github.com:996Code/kaoyan-copilot.git kaoyan-copilot/src
+cd kaoyan-copilot/src
+
+# 写 backend/.env（数据库指向现成 PG 容器；按实际改账号密码/地址）
+cat > backend/.env <<'EOF'
+DATABASE_URL=postgresql+psycopg://<user>:<pass>@<pg地址>:5432/kaoyan
+AUTH_USERNAME=admin
+AUTH_PASSWORD=<你的密码>
+EXAM_DATE=2026-12-19
+WORDS_PER_DAY=50
+EOF
+
+# 一键部署（容器加入 PG 所在的 docker 网络，挂载原卷切片）
+HOST_ASSETS_DIR=/data/kaoyan-copilot/data/assets \
+NETWORK=llm-modeler_default PORT=28080 bash deploy.sh
 ```
+
+### 日常更新
+
+```bash
+cd /data/kaoyan-copilot/src && git pull && \
+HOST_ASSETS_DIR=/data/kaoyan-copilot/data/assets NETWORK=llm-modeler_default PORT=28080 bash deploy.sh
+```
+
+部署流程：停掉旧容器 → 构建镜像（npm 淘宝源/pip 清华源）→ 启动新容器 → 健康检查。
+数据库连接读 backend/.env（localhost 自动转 host.docker.internal；容器网络内直接写容器名）。
+真题数据迁移：本地 `docker exec chatbi-postgres pg_dump -U root -d kaoyan --no-owner > dump.sql`，服务器 `docker exec -i <pg容器> psql -U <user> -d kaoyan < dump.sql`。
 
 数据库连接优先级：环境变量 `DATABASE_URL` > `backend/.env` 的 `DATABASE_URL`（线上 PG 配这里）> 兜底 `host.docker.internal:5432`。`.env` 里写 `localhost` 会自动转换为 `host.docker.internal`（容器内 localhost 指向容器自身）。
 
