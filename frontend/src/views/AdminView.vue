@@ -40,6 +40,7 @@ async function load() {
     llm.llm_model = cfg.llm_model
     llmState.value = cfg
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false
@@ -53,6 +54,7 @@ async function saveLlm() {
     llm.llm_api_key = ''
     message.success('已保存')
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     savingLlm.value = false

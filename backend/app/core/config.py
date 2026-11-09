@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = ""
     app_prefix: str = ""
+    token_secret: str = "kaoyan-copilot-token-secret-v1"
     exam_date: str = "2026-12-19"
     words_per_day: int = 50
 

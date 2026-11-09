@@ -39,6 +39,7 @@ async function loadOverview() {
   try {
     groups.value = await api('/api/knowledge/overview')
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false
@@ -58,6 +59,7 @@ async function openCategory(g) {
     stats.done = 0
     active.value = g
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false
@@ -77,6 +79,7 @@ async function rate(fam) {
     idx.value += 1
     revealed.value = false
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     ratingBusy.value = false

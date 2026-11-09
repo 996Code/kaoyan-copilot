@@ -1,7 +1,14 @@
-"""用户认证：PBKDF2 口令哈希 + 内存 token（token -> user_id，重启失效）。"""
+"""用户认证：PBKDF2 口令哈希 + HMAC 签名令牌（重启不失效，30 天有效期）。
+
+令牌格式：{user_id}.{token_version}.{exp_unix}.{hmac_sha256(payload)}
+- token_version 存于用户表，重置密码/删除用户时 +1，旧令牌即刻失效
+- 签名密钥存 system_settings（首次自动生成）
+"""
 
 import hashlib
+import hmac
 import secrets
+import time
 from typing import TYPE_CHECKING
 
 from fastapi import Depends, HTTPException, Request
@@ -11,10 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_session
 
-if TYPE_CHECKING:
-    from app.models.user import User
-
-_tokens: dict[str, int] = {}  # token -> user_id
+TOKEN_TTL = 30 * 86400  # 30 天
 
 
 def hash_password(password: str) -> str:
@@ -32,10 +36,38 @@ def verify_password(password: str, stored: str) -> bool:
         return False
 
 
-def issue_token(user_id: int) -> str:
-    token = secrets.token_urlsafe(32)
-    _tokens[token] = user_id
-    return token
+def _secret(session: Session) -> bytes:
+    """签名密钥：存 system_settings，首次调用自动生成。"""
+    from app.models.setting import SystemSetting
+
+    row = session.get(SystemSetting, "token_secret")
+    if row and row.value:
+        return row.value.encode()
+    secret = secrets.token_hex(32)
+    session.add(SystemSetting(key="token_secret", value=secret))
+    session.commit()
+    return secret.encode()
+
+
+def issue_token(user_id: int, token_version: int = 0) -> str:
+    payload = f"{user_id}.{token_version}.{int(time.time()) + TOKEN_TTL}"
+    sig = hmac.new(settings.token_secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+    return f"{payload}.{sig}"
+
+
+def verify_token(token: str, token_version: int = 0) -> int | None:
+    """校验签名与有效期，返回 user_id；无效返回 None。"""
+    try:
+        payload, sig = token.rsplit(".", 1)
+        user_id, version, exp = payload.split(".")
+        if int(version) != token_version or int(exp) < time.time():
+            return None
+        expect = hmac.new(settings.token_secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+        if not secrets.compare_digest(sig, expect):
+            return None
+        return int(user_id)
+    except (ValueError, AttributeError):
+        return None
 
 
 def find_user(session: Session, username: str) -> "User | None":
@@ -69,11 +101,11 @@ def current_user(request: Request, session: Session = Depends(get_session)) -> "
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="未登录")
     token = auth.removeprefix("Bearer ").strip()
-    user_id = _tokens.get(token)
-    if user_id is None:
-        raise HTTPException(status_code=401, detail="登录已失效，请重新登录")
     from app.models.user import User
 
+    user_id = verify_token(token)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="登录已失效，请重新登录")
     user = session.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="用户不存在")

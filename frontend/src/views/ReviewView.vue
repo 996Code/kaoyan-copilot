@@ -41,6 +41,7 @@ async function load() {
     idx.value = Math.min(resume, Math.max(0, cards.value.length - 1))
     resetCard()
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false
@@ -73,6 +74,7 @@ async function submitQuestion() {
     stats.done += 1
     if (result.value.correct) stats.correctCount += 1
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   }
 }
@@ -89,6 +91,7 @@ async function rateWord(rating) {
     if (rating >= 3) stats.correctCount += 1
     next()
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     ratingWord.value = false

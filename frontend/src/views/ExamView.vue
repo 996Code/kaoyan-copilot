@@ -179,6 +179,7 @@ onMounted(async () => {
     await load()
     tick()
   } catch (e) {
+    if (e.status === 401) return
     dialog.error({ title: '加载失败', content: String(e.message || e) })
   }
 })

@@ -29,6 +29,7 @@ async function load() {
     idx.value = 0
     batchStats.easy = batchStats.good = batchStats.hard = 0
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false
@@ -48,6 +49,7 @@ async function mark(familiarity) {
     learnedTotal.value += 1
     idx.value += 1
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     submitting.value = false

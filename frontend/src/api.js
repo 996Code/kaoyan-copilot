@@ -50,7 +50,9 @@ export async function api(path, { method = 'GET', body } = {}) {
   if (res.status === 401) {
     clearToken()
     if (!location.hash.includes('/login')) location.hash = '#/login'
-    throw new ApiError(401, '未登录或登录失效')
+    const err = new ApiError(401, '未登录或登录失效')
+    err.silent = true  // 静默跳登录页，页面不再弹错误框
+    throw err
   }
   if (!res.ok) {
     let msg = `请求失败 ${res.status}`
@@ -70,7 +72,9 @@ export async function sse(path, { onEvent } = {}) {
   if (res.status === 401) {
     clearToken()
     location.hash = '#/login'
-    throw new ApiError(401, '未登录或登录失效')
+    const err = new ApiError(401, '未登录或登录失效')
+    err.silent = true
+    throw err
   }
   if (!res.ok || !res.body) throw new ApiError(res.status, '连接失败')
   const reader = res.body.getReader()

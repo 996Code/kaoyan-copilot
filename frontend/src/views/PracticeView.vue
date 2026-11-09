@@ -94,6 +94,7 @@ async function start() {
     stats.correct = 0
     if (!questions.value.length) message.warning('没有符合条件的题目')
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false

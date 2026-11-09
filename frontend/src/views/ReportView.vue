@@ -53,6 +53,7 @@ onMounted(async () => {
     results.value = data.results || {}
     answers.value = data.answers || {}
   } catch (e) {
+    if (e.status === 401) return
     dialog.error({ title: '加载失败', content: String(e.message || e) })
   } finally {
     loading.value = false

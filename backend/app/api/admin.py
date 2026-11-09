@@ -84,6 +84,7 @@ def reset_password(user_id: int, body: ResetPasswordIn, session: Session = Depen
     if u is None:
         raise HTTPException(status_code=404, detail="用户不存在")
     u.password_hash = hash_password(body.password)
+    u.token_version = (u.token_version or 0) + 1  # 使该用户已签发令牌全部失效
     session.commit()
     return {"ok": True, "username": u.username}
 

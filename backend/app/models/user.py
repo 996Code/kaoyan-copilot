@@ -11,3 +11,4 @@ class User(Base, TimestampMixin):
     username: Mapped[str] = mapped_column(String(32), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(256))
     is_admin: Mapped[bool] = mapped_column(default=False)
+    token_version: Mapped[int] = mapped_column(default=0)  # 重置密码时+1，使已签发令牌失效

@@ -46,6 +46,7 @@ async function load() {
     activeStats.value = await api(`/api/wrongbook/stats?subject=${subject.value}`)
     idx.value = Math.min(idx.value, Math.max(0, items.value.length - 1))
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   } finally {
     loading.value = false
@@ -92,6 +93,7 @@ async function toggleMastered(it) {
       }, 1400)
     }
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   }
 }
@@ -127,6 +129,7 @@ onMounted(async () => {
     const sub = subs.find((s) => s.code === subject.value)
     modules.value = sub?.modules || []
   } catch (e) {
+    if (e.status === 401) return
     message.error(e.message)
   }
   load()

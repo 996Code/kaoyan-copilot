@@ -22,7 +22,7 @@ class LoginIn(BaseModel):
 
 def _auth_response(user) -> dict:
     return {
-        "token": issue_token(user.id),
+        "token": issue_token(user.id, user.token_version or 0),
         "username": user.username,
         "is_admin": bool(user.is_admin),
     }
