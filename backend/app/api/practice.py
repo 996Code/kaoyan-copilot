@@ -39,7 +39,10 @@ def questions(
         stmt = stmt.where(Question.number >= min_number)
     if max_number is not None:
         stmt = stmt.where(Question.number <= max_number)
-    stmt = stmt.order_by(func.random() if random else (Question.year.desc(), Question.number))
+    if random:
+        stmt = stmt.order_by(func.random())
+    else:
+        stmt = stmt.order_by(Question.year.desc(), Question.number)
     stmt = stmt.limit(min(limit, 100))
     rows = session.scalars(stmt).all()
 
