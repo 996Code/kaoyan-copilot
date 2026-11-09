@@ -83,6 +83,11 @@ body {
 .anscard .cell.answered { background: var(--blue); border-color: var(--blue); color: #fff; }
 .anscard .cell.current { outline: 2px solid var(--warn); outline-offset: 1px; font-weight: 700; }
 
+/* 可点击放大的图形 */
+.rich svg { cursor: zoom-in; }
+.opt-row .rich svg { cursor: inherit; }
+img.chart-img { cursor: zoom-in; }
+
 /* 完形空位 */
 .blank-chip {
   display: inline-block; min-width: 2.6em; text-align: center; margin: 0 3px;

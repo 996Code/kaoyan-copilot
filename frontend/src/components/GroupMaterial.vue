@@ -97,7 +97,7 @@ const matSegments = computed(() => {
 
     <!-- 作文图表 -->
     <img v-if="group.material_image" :src="base + 'paper-assets/' + group.material_image"
-      :alt="group.title || '图表'" class="chart-img" />
+      :alt="group.title || '图表'" class="chart-img lightbox-img" />
 
     <!-- 查词弹层 -->
     <div v-if="popup" class="word-popup" :style="{ left: popup.x + 'px', top: popup.y + 'px' }">

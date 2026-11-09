@@ -8,6 +8,7 @@ import {
 import { bindGlobalToast, clearToken } from './api'
 import ToastBinder from './components/ToastBinder.vue'
 import AppIcon from './components/AppIcon.vue'
+import Lightbox from './components/Lightbox.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -114,6 +115,9 @@ function goMore(to) {
           </header>
           <router-view />
         </div>
+
+        <!-- 全局点击放大（SVG 图形 / 图表图片） -->
+        <Lightbox />
 
         <!-- 移动端底部 Tab 栏 -->
         <nav v-if="!inExam && !isLogin" class="tabbar">
