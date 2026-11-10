@@ -85,7 +85,6 @@ function goAvatarAdmin() {
             <div class="topbar-inner">
               <div class="brand">
                 <span class="logo">考</span>
-                <span class="title">考研助手</span>
               </div>
               <span class="bar-title">{{ pageTitle }}</span>
               <nav class="nav">
@@ -99,10 +98,8 @@ function goAvatarAdmin() {
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">
-                <div v-if="daysLeft" class="exam-chip" :title="`距初试 ${daysLeft} 天`"
-                  :aria-label="`距初试 ${daysLeft} 天`">
-                  <span class="chip-text">距初试 </span><b>{{ daysLeft }}</b><span class="chip-text"> 天</span>
-                </div>
+                <div v-if="daysLeft" class="exam-chip" title="距初试天数"
+                  :aria-label="`距初试 ${daysLeft} 天`"><b>{{ daysLeft }}</b></div>
                 <div v-if="isLoggedIn && username" class="username avatar-wrap">
                   <button class="avatar-btn" :aria-expanded="avatarMenuOpen" aria-label="账号菜单"
                     @click.stop="avatarMenuOpen = !avatarMenuOpen">
@@ -148,6 +145,11 @@ function goAvatarAdmin() {
 .shell.in-exam { background: #fff; }
 .dark .shell, .in-exam { background: inherit; }
 .topbar { position: sticky; top: 0; z-index: 20; background: var(--card); border-bottom: 1px solid var(--line); }
+/* ≥1100px：导航绝对居中于视口（弹性居中会受两侧簇宽不对称影响）；下方留 flex 居中防碰撞 */
+@media (min-width: 1100px) {
+  .nav { position: absolute; left: 50%; transform: translateX(-50%); }
+  .right { margin-left: auto; }
+}
 .topbar-inner { max-width: 1480px; margin: 0 auto; padding: 0 20px; min-height: 52px; display: flex; align-items: center; gap: 12px; position: relative; }
 .brand, .right { flex-shrink: 0; }
 .nav { min-width: 0; }
@@ -155,8 +157,7 @@ function goAvatarAdmin() {
 .u-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; }
 .logo { width: 28px; height: 28px; border-radius: 7px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-.title { font-size: 15px; }
-.nav { display: flex; gap: 2px; flex: 1; }
+.nav { display: flex; gap: 2px; flex: 1; justify-content: center; }
 .nav a { padding: 8px 9px; border-radius: 6px; color: var(--t2); text-decoration: none; font-size: 14px; }
 .nav a.router-link-active { background: var(--blue-bg); color: var(--blue); font-weight: 600; }
 .exam-chip { display: flex; align-items: center; gap: 6px; background: var(--blue-bg);
@@ -171,8 +172,6 @@ function goAvatarAdmin() {
 
 @media (max-width: 768px) {
   .nav { display: none; }
-  .brand .title { display: none; }  /* 移动端只留 logo 徽标 */
-  .chip-text { display: none; }  /* 倒计时只显示数字 */
   .right .ghost-btn { display: none; }  /* 退出在头像菜单里 */
   .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
   .bar-title {
