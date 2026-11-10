@@ -98,7 +98,7 @@ function goAvatarAdmin() {
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">
-                <div v-if="daysLeft" class="exam-chip" title="距初试天数"
+                <div v-if="daysLeft" class="exam-chip" :title="`距初试 ${daysLeft} 天`"
                   :aria-label="`距初试 ${daysLeft} 天`"><b>{{ daysLeft }}</b></div>
                 <div v-if="isLoggedIn && username" class="username avatar-wrap">
                   <button class="avatar-btn" :aria-expanded="avatarMenuOpen" aria-label="账号菜单"
