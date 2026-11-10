@@ -115,19 +115,6 @@ cd backend
 
 注意：`reset_tables.py` 后需按顺序重跑全部导入；日常只跑 `verify_data.py` 即可。
 
-## 备份与恢复（生产必配）
-
-```bash
-# 备份（服务器默认参数：postgres 容器 / postgres 用户；本地用 PGUSER=root）
-bash backup_db.sh                      # → ../backups/kaoyan-时间戳.sql.gz，保留最近 14 份
-# 建议 crontab（每天 4:00）：
-# 0 4 * * * cd /data/kaoyan-copilot/src && bash backup_db.sh >> /data/kaoyan-copilot/backups/backup.log 2>&1
-
-# 恢复（已演练验证：35 卷 / 1842 题完整还原）
-gunzip -c kaoyan-时间戳.sql.gz | docker exec -i postgres psql -U postgres -d kaoyan
-```
-
-
 > 注意：`data/raw`（真题快照）与 `data/assets`（原卷切片/图表）不进 git 仓库。clone 后需自备真题数据放入 `data/raw/`，再按下方「重建数据」执行导入（assets 由导入脚本自动生成）。
 
 ## 依赖
