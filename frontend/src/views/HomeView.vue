@@ -46,7 +46,7 @@ const sortedModules = computed(() =>
       <div class="mh-num">{{ plan?.days_left ?? '—' }}<small>天</small></div>
       <div class="mh-text">
         <b>距 2027 考研初试</b>
-        <span>{{ plan?.today || '' }} · 目标 管综 120 / 英二 55</span>
+        <span class="mh-sub">目标 120 / 55</span>
       </div>
     </div>
 
@@ -112,9 +112,7 @@ const sortedModules = computed(() =>
     <!-- 冲刺日历 -->
     <div v-if="calendar && calendar.days" class="cal panel" style="margin-bottom:12px">
       <div class="panel-h"><b>冲刺日历</b>
-        <span class="muted" style="font-size:11px;margin-left:8px">
-          {{ calendar.days.length }} 天 · {{ calendar.days_left }} 天后考试
-        </span>
+        <span class="cal-hint muted">{{ calendar.days_left }}天后考试</span>
       </div>
       <div class="cal-grid">
         <div v-for="d in calendar.days.slice(0, 14)" :key="d.date" class="cal-day"
@@ -124,9 +122,7 @@ const sortedModules = computed(() =>
           <span class="cd-dot" :class="{ on: d.studied, exam: d.is_exam_day }"></span>
         </div>
       </div>
-      <div class="cal-legend muted">
-        <span>数字=距考试天数</span><span>●=已学习</span><span class="exam-mark">◆=考试日</span>
-      </div>
+      <div class="cal-legend muted">天数 · ●已学 · ◆考试日</div>
     </div>
 
     <!-- 数据区 Tab（置于面板上方，移动端显示） -->
@@ -140,7 +136,7 @@ const sortedModules = computed(() =>
     <div v-if="trends && (trends.subjects.gz199.count || trends.subjects.en2.count)" style="margin-bottom: 12px" v-show="showTab('trend')">
       <div class="panel">
         <div class="panel-h"><b>模考趋势与过线预测</b>
-          <span class="muted" style="font-size:12px; margin-left:10px">估分 = 客观得分 + 主观 AI 批改；预测按近期趋势外推至考试日</span>
+          <span class="tr-hint muted">估分=客观+AI批改</span>
         </div>
         <div class="trend-grid">
           <div v-for="(sub, code) in trends.subjects" :key="code" class="tr-col" v-show="sub.count">
@@ -275,6 +271,9 @@ const sortedModules = computed(() =>
 .hs { color: var(--t3); font-size: 12px; }
 .go { margin-left: auto; color: var(--blue); font-size: 12.5px; }
 
+.mh-sub { font-size: 11px; opacity: .82; margin-top: 2px; }
+.tr-hint { font-size: 10px; margin-left: 6px; white-space: nowrap; }
+.cal-hint { font-size: 10px; margin-left: 6px; white-space: nowrap; }
 /* 冲刺日历 */
 .mh-streak { font-size: 13px; color: #fff; background: rgba(255,255,255,.2); border-radius: 99px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
 .cal { border-radius: var(--r-card); }
@@ -333,7 +332,7 @@ const sortedModules = computed(() =>
   .mh-num { font-size: 46px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
   .mh-num small { font-size: 15px; font-weight: 600; margin-left: 2px; opacity: .85; }
   .mh-text b { display: block; font-size: 16px; }
-  .mh-text span { display: block; font-size: 12px; opacity: .82; margin-top: 3px; }
+  .mh-text span { display: block; font-size: 11px; opacity: .82; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
   .kb-head { display: none; }
 
   /* 任务卡 2×2 紧凑排版 */

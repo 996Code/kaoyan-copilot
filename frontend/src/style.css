@@ -129,6 +129,10 @@ textarea.essay:focus { border-color: var(--blue); }
   /* 页面标题已上移至顶栏，页内标题行隐藏 */
   .page-h2 { display: none !important; }
   .page-h2 + p, .kb-head { display: none !important; }
+  .panel-h { flex-wrap: nowrap !important; overflow: hidden; white-space: nowrap !important; }
+  .panel-h .more { display: none !important; }
+  .panel-h > * { white-space: nowrap !important; }
+  .tr-hint, .cal-hint { display: none !important; }
   /* 触摸目标统一加高 */
   .page .n-button { min-height: 34px; }
   .page .n-button--tiny { min-height: 28px; }

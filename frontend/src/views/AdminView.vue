@@ -238,6 +238,7 @@ onMounted(load)
 .sc-label { font-size: 12.5px; color: var(--t3); }
 .sc-value { font-size: 26px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
 @media (max-width: 768px) {
+  .admin-note { display: none; }
   .tbl { grid-template-columns: repeat(2, 1fr); font-size: 12.5px; }
   .tbl.head { display: none; }
 }

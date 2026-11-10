@@ -74,7 +74,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <div class="vb-head">
       <h2 style="margin:18px 0 4px">背单词</h2>
       <p class="muted" style="margin:0">
-        按真题词频排序学新词（最高频的先背）；标记熟悉度后进入 FSRS 复习队列。
+        按词频先背高频词 · 标记后进复习队列
       </p>
     </div>
 
