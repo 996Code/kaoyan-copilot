@@ -103,12 +103,14 @@ cd frontend && npm run dev
 cd backend
 .venv/bin/python -I scripts/create_tables.py        # 建缺失表（不动已有数据）
 .venv/bin/python -I scripts/reset_tables.py         # ⚠️ 清空重建全部表
-.venv/bin/python -I scripts/import_english2.py      # 英二 16 套
+.venv/bin/python -I scripts/import_english2.py      # 英二 17 套（增量单套：传参如 2026-2）
 .venv/bin/python -I scripts/import_guanzong.py      # 管综 18 套
 .venv/bin/python -I scripts/import_vocab.py         # 词汇 5530
 .venv/bin/python -I scripts/apply_answer_verdict.py # 答案裁决修正（26 处）
 .venv/bin/python -I scripts/verify_data.py          # 数据对账校验
 .venv/bin/python -I scripts/crosscheck_gz_answers.py# 管综答案交叉校验
+.venv/bin/python -I scripts/fix_en2_2026_dup.py     # 清理历史重复导入的英二题目（幂等）
+.venv/bin/python -I scripts/migrate_timezone.py     # 库会话时区设为 Asia/Shanghai（新环境必跑）
 ```
 
 注意：`reset_tables.py` 后需按顺序重跑全部导入；日常只跑 `verify_data.py` 即可。

@@ -268,11 +268,14 @@ def main() -> None:
                     session.rollback()
                     return
                 print(f"  [reset] {only} 已存在且无作答，重建该套")
-                sec_ids = select(PaperSection.id).where(PaperSection.paper_id == old.id)
-                pq_ids = select(PaperQuestion.question_id).where(PaperQuestion.section_id.in_(sec_ids))
+                # 先物化 id 列表再删除：子查询与 DELETE 同事务时若先删关联行，后续 in_() 会匹配空集（曾致题目翻倍）
+                sec_ids = list(session.scalars(select(PaperSection.id).where(PaperSection.paper_id == old.id)))
+                qids = list(session.scalars(select(PaperQuestion.question_id).where(PaperQuestion.section_id.in_(sec_ids))))
+                gids = list(session.scalars(select(Question.group_id).where(Question.id.in_(qids), Question.group_id.is_not(None))))
                 session.execute(delete(PaperQuestion).where(PaperQuestion.section_id.in_(sec_ids)))
                 session.execute(delete(PaperSection).where(PaperSection.paper_id == old.id))
-                session.execute(delete(Question).where(Question.id.in_(pq_ids)))
+                session.execute(delete(Question).where(Question.id.in_(qids)))
+                session.execute(delete(QuestionGroup).where(QuestionGroup.id.in_(gids)))
                 session.execute(delete(Paper).where(Paper.id == old.id))
                 session.commit()
 
