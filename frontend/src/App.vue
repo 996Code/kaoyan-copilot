@@ -99,7 +99,7 @@ function goAvatarAdmin() {
               </nav>
               <div class="right">
                 <div v-if="daysLeft" class="exam-chip" :title="`距初试 ${daysLeft} 天`"
-                  :aria-label="`距初试 ${daysLeft} 天`"><b>{{ daysLeft }}</b></div>
+                  :aria-label="`距初试 ${daysLeft} 天`">距初试 <b>{{ daysLeft }}</b> 天</div>
                 <div v-if="isLoggedIn && username" class="username avatar-wrap">
                   <button class="avatar-btn" :aria-expanded="avatarMenuOpen" aria-label="账号菜单"
                     @click.stop="avatarMenuOpen = !avatarMenuOpen">
@@ -175,16 +175,13 @@ function goAvatarAdmin() {
 
 @media (max-width: 768px) {
   .nav { display: none; }
-  /* 移动端顶栏三段式：倒计时徽标(左，替代logo) · 页名(绝对居中) · 头像(右)——两侧等宽锚点 */
+  /* 移动端顶栏三段式：「距初试 N 天」胶囊(左，替代logo) · 页名(绝对居中) · 头像+用户名(右) */
   .brand { display: none; }
   .exam-chip {
     position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
-    width: 28px; height: 28px; padding: 0; border-radius: 7px;
-    background: var(--blue); color: #fff;
-    display: flex; align-items: center; justify-content: center;
+    padding: 4px 9px; border-radius: 7px; font-size: 12px; gap: 3px; white-space: nowrap;
   }
   .exam-chip b { font-size: 13px; }
-  .username .u-name { display: none; }  /* 用户名收进头像菜单，右侧只留头像 */
   .right .ghost-btn { display: none; }  /* 退出在头像菜单里 */
   .right { margin-left: auto; gap: 10px; }
   .bar-title {

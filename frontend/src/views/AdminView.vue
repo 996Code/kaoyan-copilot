@@ -202,9 +202,16 @@ onMounted(load)
         <div class="user-cards">
           <div v-for="u in users" :key="u.id" class="ucard panel">
             <div class="uc-head">
-              <b>{{ u.username }}</b>
-              <n-tag v-if="u.is_admin" type="info" size="tiny">管理员</n-tag>
+              <div class="uc-id">
+                <b>{{ u.username }}</b>
+                <n-tag v-if="u.is_admin" type="info" size="tiny">管理员</n-tag>
+              </div>
+              <div class="uc-actions">
+                <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
+                <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
+              </div>
             </div>
+            <div class="uc-meta muted">注册 {{ fmt(u.created_at) }} · 最近活跃 {{ fmt(u.last_active) }}</div>
             <div class="uc-stats">
               <div class="ucs"><b>{{ u.exams }}</b><span>模考</span></div>
               <div class="ucs"><b>{{ u.answers }}</b><span>作答</span></div>
@@ -214,17 +221,6 @@ onMounted(load)
               <div class="ucs"><b>{{ u.wrong_active }}</b><span>待巩固错题</span></div>
               <div class="ucs"><b>{{ u.cards }}</b><span>记忆卡</span></div>
               <div class="ucs"><b>{{ u.words_learned }}</b><span>已学词</span></div>
-            </div>
-            <div class="uc-foot">
-              <span class="muted">最近活跃：{{ fmt(u.last_active) }}</span>
-              <details class="user-details">
-                <summary>注册信息</summary>
-                <p>注册时间：{{ fmt(u.created_at) }}</p>
-              </details>
-              <div class="uc-actions">
-                <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
-                <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
-              </div>
             </div>
           </div>
         </div>
@@ -342,16 +338,16 @@ details[open] > summary::before { content: '−'; }
   .user-table { display: none; }
   .user-cards { display: flex; flex-direction: column; gap: 10px; }
   .ucard { padding: 14px; border-radius: 8px; }
-  .uc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
-  .uc-head b { font-size: 16px; overflow-wrap: anywhere; min-width: 0; }
-  .uc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; margin-bottom: 14px; }
+  .uc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .uc-id { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .uc-id b { font-size: 15px; overflow-wrap: anywhere; min-width: 0; }
+  .uc-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+  .uc-actions .n-button { min-height: 32px; }
+  .uc-meta { font-size: 12px; margin-bottom: 12px; overflow-wrap: anywhere; }
+  .uc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
   .ucs { min-width: 0; text-align: center; }
   .ucs b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .ucs span { font-size: 12px; color: var(--t3); }
-  .uc-foot { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
-  .uc-foot > span { font-size: 12px; }
-  .user-details p { font-size: 14px; margin: 0 0 10px; }
-  .uc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>
