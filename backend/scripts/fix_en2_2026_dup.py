@@ -71,11 +71,11 @@ def main() -> None:
                         keep_wi.wrong_count += wi.wrong_count
                         s.delete(wi)
                         n_merged += 1
-                # 复习卡并入：同 user 已有保留份则删孤儿，否则改指
+                # 复习卡并入：同 user 已有保留份则删孤儿，否则改指（注意 card_type 是 wrong_question）
                 for rc in s.scalars(select(ReviewCard).where(
-                        ReviewCard.card_type == "wrong", ReviewCard.ref_id == q.id)):
+                        ReviewCard.card_type == "wrong_question", ReviewCard.ref_id == q.id)):
                     keep_rc = s.scalar(select(ReviewCard).where(
-                        ReviewCard.user_id == rc.user_id, ReviewCard.card_type == "wrong", ReviewCard.ref_id == keep
+                        ReviewCard.user_id == rc.user_id, ReviewCard.card_type == "wrong_question", ReviewCard.ref_id == keep
                     ))
                     if keep_rc is None:
                         rc.ref_id = keep
