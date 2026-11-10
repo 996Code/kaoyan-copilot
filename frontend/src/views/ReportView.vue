@@ -139,13 +139,12 @@ const counts = computed(() => {
     <template v-else-if="paper">
       <div class="report-head">
         <div>
-          <h2 style="margin:0 0 4px">
-            <span class="rp-full">{{ paper.name }} · 成绩单</span>
-            <span class="rp-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }} · 成绩单</span>
+          <h2 style="margin:0">
+            <span class="rp-full">{{ paper.name }}</span>
+            <span class="rp-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }}</span>
+            <span class="rp-time muted">· {{ duration }}</span>
+            <n-tag v-if="exam.overtime" type="error" size="small" style="margin-left:6px">超时</n-tag>
           </h2>
-          <span class="muted">用时 {{ duration }}
-            <n-tag v-if="exam.overtime" type="error" size="small" style="margin-left:8px">超时交卷</n-tag>
-          </span>
         </div>
         <div style="display:flex; gap:10px">
           <n-button @click="$router.push(`/papers/${paper.subject_code}`)">返回试卷列表</n-button>
@@ -321,6 +320,7 @@ const counts = computed(() => {
   .report-head { flex-direction: column; align-items: flex-start; gap: 10px; }
   .report-head > div:last-child { width: 100%; display: flex; gap: 8px; }
   .report-head h2 { font-size: 18px; }
+  .rp-time { font-size: 13px; font-weight: 400; }
 }
 .nav-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; gap:8px; }
 .nav-pos { font-size:13.5px; color:var(--t2); font-variant-numeric:tabular-nums; }

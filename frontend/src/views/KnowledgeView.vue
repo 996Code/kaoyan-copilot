@@ -206,5 +206,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 @media (max-width:768px) {
   .ktitle { font-size:21px; }
   .kcard { padding:18px 16px; }
+  .cat-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .cat-top b { font-size:13px; }
+  .cat-foot { font-size:11px; }
 }
 </style>
