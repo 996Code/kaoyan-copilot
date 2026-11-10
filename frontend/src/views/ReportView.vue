@@ -207,9 +207,9 @@ const counts = computed(() => {
       <!-- 答题卡面板 -->
       <div v-if="showNav" class="nav-grid panel" style="margin-bottom:12px;padding:12px 14px">
         <div class="anscard">
-          <div v-for="(it, i) in filtered" :key="currentItem.q.id" class="cell"
-            :class="{ answered: results[String(currentItem.q.id)]?.is_correct === true, current: i === idx }"
-            @click="goto(i)">{{ currentItem.q.number || i + 1 }}</div>
+          <div v-for="(it, i) in filtered" :key="it.q.id" class="cell"
+            :class="{ answered: results[String(it.q.id)]?.is_correct === true, current: i === idx }"
+            @click="goto(i)">{{ it.q.number || i + 1 }}</div>
         </div>
         <div class="muted" style="font-size:11.5px;margin-top:8px">深色＝答对 · 橙框＝当前</div>
       </div>
@@ -223,14 +223,14 @@ const counts = computed(() => {
           </n-tag>
           <n-tag v-if="currentItem.q.disputed" type="warning" size="small">该题答案存在版本争议</n-tag>
           <span class="muted" style="font-size:12px">
-            第 {{ currentItem.q.number }} 题 · {{ sections[it.sectionIndex]?.name }} · 得分
+            第 {{ currentItem.q.number }} 题 · {{ sections[currentItem.sectionIndex]?.name }} · 得分
             {{ results[String(currentItem.q.id)]?.score_earned ?? '—' }}/{{ currentItem.q.score ?? '—' }}
           </span>
         </div>
 
         <GroupMaterial v-if="currentItem.group" :group="currentItem.group" />
 
-        <QuestionItem :q="it.q" :model-value="answers[String(currentItem.q.id)]" mode="review"
+        <QuestionItem :q="currentItem.q" :model-value="answers[String(currentItem.q.id)]" mode="review"
           :result="{ your_answer: results[String(currentItem.q.id)]?.your_answer, correct_answer: currentItem.q.answer }"
           :shared-options="currentItem.group?.options" />
 
@@ -261,7 +261,7 @@ const counts = computed(() => {
         <!-- 主观题：AI 批改 -->
         <div v-if="currentItem.q.qtype !== 'single_choice'" class="ai-grade">
           <n-button size="small" type="warning" ghost
-            :loading="gradeResults[currentItem.q.id]?.loading" @click="doGrade(it.q)">
+            :loading="gradeResults[currentItem.q.id]?.loading" @click="doGrade(currentItem.q)">
             AI 批改本题
           </n-button>
           <template v-if="gradeResults[currentItem.q.id]?.data">
