@@ -106,8 +106,11 @@ function goAvatarAdmin() {
                     <span class="avatar">{{ username[0].toUpperCase() }}</span>
                     <span class="u-name">{{ username }}</span>
                   </button>
-                  <!-- 头像下拉：系统管理（admin）/ 退出登录 -->
+                  <!-- 头像下拉：账号名 / 系统管理（admin）/ 退出登录 -->
                   <div v-if="avatarMenuOpen" class="avatar-menu">
+                    <div class="av-user">
+                      <span class="avatar">{{ username[0].toUpperCase() }}</span>{{ username }}
+                    </div>
                     <button v-if="isAdmin" class="av-item" @click="goAvatarAdmin()">
                       <AppIcon name="ai" :size="16" />系统管理
                     </button>
@@ -172,14 +175,22 @@ function goAvatarAdmin() {
 
 @media (max-width: 768px) {
   .nav { display: none; }
+  /* 移动端顶栏三段式：倒计时徽标(左，替代logo) · 页名(绝对居中) · 头像(右)——两侧等宽锚点 */
+  .brand { display: none; }
+  .exam-chip {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; padding: 0; border-radius: 7px;
+    background: var(--blue); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .exam-chip b { font-size: 13px; }
+  .username .u-name { display: none; }  /* 用户名收进头像菜单，右侧只留头像 */
   .right .ghost-btn { display: none; }  /* 退出在头像菜单里 */
-  .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
-  /* 标题在 logo 与右侧簇之间的空档居中（左右留白相等，视觉上才是正中；
-     绝对屏幕居中会因右簇过宽显得偏右） */
+  .right { margin-left: auto; gap: 10px; }
   .bar-title {
-    display: block; flex: 1; min-width: 0; text-align: center;
-    font-size: 15px; font-weight: 600; color: var(--t1);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: block; position: absolute; left: 50%; transform: translateX(-50%);
+    max-width: 50vw; overflow: hidden; text-overflow: ellipsis;
+    font-size: 15px; font-weight: 600; color: var(--t1); white-space: nowrap;
   }
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
@@ -206,6 +217,9 @@ function goAvatarAdmin() {
   background: var(--card); border: 1px solid var(--line); border-radius: 10px;
   box-shadow: var(--shadow-pop); min-width: 150px; overflow: hidden;
 }
+.av-user { display: flex; align-items: center; gap: 8px; padding: 11px 14px;
+  font-size: 13.5px; font-weight: 600; color: var(--t1); border-bottom: 1px solid var(--line-soft); }
+.av-user .avatar { width: 22px; height: 22px; font-size: 11px; }
 .av-item { display: flex; align-items: center; gap: 8px; width: 100%; border: none;
   background: transparent; cursor: pointer; padding: 11px 14px; font-size: 13.5px;
   color: var(--t1); text-align: left; }
