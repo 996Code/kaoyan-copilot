@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { NSelect, NTabs, NTabPane } from 'naive-ui'
+import { NSelect, NTabs, NTab } from 'naive-ui'
 import { renderRich } from '../markdown'
 
 const tab = ref('lunxiao')
@@ -131,24 +131,20 @@ const tabOptions = Object.entries(SECTIONS).map(([k, v]) => ({ label: `${v.name}
       <span class="sub">管综两篇 + 英二两篇：框架 · 句式 · 素材（配合「AI 批改」使用：看模板 → 练真题 → AI 评分）</span>
     </div>
 
-    <!-- 移动端：下拉选择 + 当前内容直接渲染 -->
+    <!-- 两套响应式导航共享唯一内容区。 -->
     <div class="w-select">
-      <n-select v-model:value="tab" :options="tabOptions" size="large" />
+      <n-select v-model:value="tab" aria-label="写作类型" :input-props="{ 'aria-label': '写作类型' }" :options="tabOptions" size="large" />
+    </div>
+    <div class="w-tabs">
+      <n-tabs v-model:value="tab" type="line" aria-label="写作类型">
+        <n-tab v-for="(s, key) in SECTIONS" :key="key" :name="key">{{ s.name }} {{ s.score }}</n-tab>
+      </n-tabs>
+    </div>
+    <div :key="tab" class="w-content">
       <div v-for="b in SECTIONS[tab].blocks" :key="b.title" class="wblock panel">
         <div class="section-title" style="font-size:14px">{{ b.title }}</div>
         <div class="rich" v-html="renderRich(b.md)"></div>
       </div>
-    </div>
-    <!-- 桌面：Tab -->
-    <div class="w-tabs">
-      <n-tabs v-model:value="tab" type="line" animated>
-      <n-tab-pane v-for="(s, key) in SECTIONS" :key="key" :name="key" :tab="`${s.name} ${s.score}`">
-        <div v-for="b in s.blocks" :key="b.title" class="wblock panel">
-          <div class="section-title" style="font-size:14px">{{ b.title }}</div>
-          <div class="rich" v-html="renderRich(b.md)"></div>
-        </div>
-      </n-tab-pane>
-    </n-tabs>
     </div>
   </div>
 </template>
@@ -157,12 +153,16 @@ const tabOptions = Object.entries(SECTIONS).map(([k, v]) => ({ label: `${v.name}
 .kb-head { display:flex; align-items:baseline; gap:12px; margin:6px 0 14px; }
 .kb-head h1 { font-size:20px; font-weight:700; margin:0; }
 .kb-head .sub { color:var(--t3); font-size:13px; }
-.wblock { padding:16px 20px; margin-bottom:12px; border-radius:var(--r-card); }
+.wblock { padding:16px 20px; margin-bottom:14px; border-radius:var(--r-card); min-width:0; overflow-wrap:anywhere; }
+.w-content { margin-top:14px; min-width:0; }
+.w-tabs :deep(.n-tabs-tab) { min-height:44px; }
 
 .w-select { display: none; }
 @media (max-width: 768px) {
   .w-select { display: block; }
-  .w-select > .n-select { margin-bottom: 14px; }
+  .w-select { min-width:0; }
+  .w-select :deep(.n-base-selection) { min-height:44px; }
+  .wblock { padding:14px; }
   .w-tabs { display: none; }
 }
 </style>

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { NButton, NInput } from 'naive-ui'
 import { api, setToken } from '../api'
+import AppIcon from '../components/AppIcon.vue'
 
 const username = ref('')
 const password = ref('')
@@ -39,9 +40,9 @@ async function submit() {
         <p>199 管综 + 英语二 · 真题模考 · FSRS 记忆复习 · AI 讲解批改</p>
       </div>
       <div class="features">
-        <div class="feat"><b>📝</b><div>34 套真题整卷<br />限时模考自动判分</div></div>
-        <div class="feat"><b>🔁</b><div>FSRS 记忆引擎<br />答错自动进复习队列</div></div>
-        <div class="feat"><b>✨</b><div>AI 讲解与作文批改<br />按阅卷标准从紧给分</div></div>
+        <div class="feat"><AppIcon name="exam" /><div>真题模考</div></div>
+        <div class="feat"><AppIcon name="review" /><div>记忆复习</div></div>
+        <div class="feat"><AppIcon name="spark" /><div>AI 辅学</div></div>
       </div>
     </div>
 
@@ -50,9 +51,11 @@ async function submit() {
         <div class="logo">考</div>
         <h2>考研助手</h2>
       </div>
-      <n-input v-model:value="username" placeholder="用户名" size="large" @keyup.enter="submit" />
-      <n-input v-model:value="password" type="password" show-password-on="click"
-        placeholder="密码" size="large" style="margin-top:10px" @keyup.enter="submit" />
+      <label class="field-label" for="login-username">用户名</label>
+      <n-input v-model:value="username" :input-props="{ id: 'login-username', autocomplete: 'username' }" placeholder="用户名" size="large" @keyup.enter="submit" />
+      <label class="field-label" for="login-password">密码</label>
+      <n-input v-model:value="password" :input-props="{ id: 'login-password', autocomplete: mode === 'login' ? 'current-password' : 'new-password' }" type="password" show-password-on="click"
+        placeholder="密码" size="large" @keyup.enter="submit" />
       <div v-if="error" class="error">{{ error }}</div>
       <n-button type="primary" block size="large" style="margin-top:14px" :loading="loading" @click="submit">
         {{ mode === 'login' ? '进入' : '注册并进入' }}
@@ -72,17 +75,14 @@ async function submit() {
 <style scoped>
 .login-wrap {
   min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 72px;
-  background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(106,92,255,.16), transparent 60%),
-    radial-gradient(900px 500px at 110% 110%, rgba(47,111,237,.14), transparent 55%),
-    linear-gradient(160deg, #f8faff 0%, #eef1f9 100%);
+  background: var(--bg);
   padding: 24px;
 }
 .login-left { max-width: 460px; }
-.big-num { font-size: 88px; font-weight: 900; line-height: 1; color: var(--blue);
-  letter-spacing: -2px; }
+.big-num { font-size: 72px; font-weight: 800; line-height: 1; color: var(--blue); }
 .big-num span { font-size: 24px; margin-left: 6px; color: var(--t3); font-weight: 600; }
-.slogan h1 { margin: 10px 0 8px; font-size: 34px; letter-spacing: 1px; }
+.field-label { display: block; font-size: 14px; color: var(--t2); margin: 14px 0 6px; }
+.slogan h1 { margin: 10px 0 8px; font-size: 30px; }
 .slogan p { margin: 0; color: var(--t3); font-size: 14.5px; }
 .features { display: flex; gap: 14px; margin-top: 34px; }
 .feat {
@@ -104,12 +104,11 @@ h2 { margin: 4px 0; }
 
 @media (max-width: 860px) {
   /* 移动端：登录卡在上首屏直达，品牌介绍收为页脚 */
-  .login-wrap { flex-direction: column; gap: 20px; padding: 28px 20px; justify-content: center; }
-  .login-card { order: 0; box-shadow: 0 8px 28px rgba(30,41,80,.10); }
-  .login-left { order: 1; max-width: 360px; text-align: center; }
-  .big-num { font-size: 40px; }
-  .slogan h1 { font-size: 20px; margin: 6px 0 4px; }
-  .slogan p { font-size: 12.5px; }
+  .login-wrap { min-height: 100dvh; flex-direction: column; gap: 24px; padding: 24px 16px; justify-content: flex-start; }
+  .login-card { order: 0; padding: 24px; width: min(380px, 100%); border-radius: 8px; box-shadow: none; }
+  .login-left { order: 1; max-width: 380px; text-align: center; }
+  .big-num, .features, .slogan h1 { display: none; }
+  .slogan p { font-size: 12px; line-height: 1.7; }
   .features { flex-direction: row; gap: 8px; margin-top: 14px; }
   .feat { flex: 1; flex-direction: column; text-align: center; padding: 10px 6px; font-size: 11px; gap: 4px; }
   .feat b { margin: 0; font-size: 18px; }

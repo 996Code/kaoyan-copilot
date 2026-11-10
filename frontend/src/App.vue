@@ -25,6 +25,7 @@ const PAGE_TITLES = [
   ['/review', '复习中心'], ['/vocab', '背单词'], ['/practice', '专项练习'],
   ['/wrongbook', '错题本'], ['/knowledge', '知识卡片'], ['/writing', '写作模板'],
   ['/admin', '系统管理'], ['/papers', '真题模考'],
+  ['/history', '模考记录'], ['/report', '成绩报告'],
 ]
 const pageTitle = computed(() => {
   void route.fullPath
@@ -53,7 +54,7 @@ function logout() {
 
 /* 移动端「更多」菜单 */
 const moreOpen = ref(false)
-const moreActive = computed(() => ['/papers', '/admin', '/knowledge', '/writing'].some(p => route.path.startsWith(p)))
+const moreActive = computed(() => ['/papers', '/history', '/report', '/admin', '/knowledge', '/writing'].some(p => route.path.startsWith(p)))
 const moreItems = computed(() => {
   const items = [
     { to: '/knowledge', icon: 'ai', label: '知识卡片' },
@@ -157,12 +158,16 @@ function goMore(to) {
 .shell.in-exam { background: #fff; }
 .dark .shell, .in-exam { background: inherit; }
 .topbar { position: sticky; top: 0; z-index: 20; background: var(--card); border-bottom: 1px solid var(--line); }
-.topbar-inner { max-width: 1240px; margin: 0 auto; padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 20px; }
+.topbar-inner { max-width: 1480px; margin: 0 auto; padding: 0 20px; min-height: 52px; display: flex; align-items: center; gap: 12px; }
+.brand, .right { flex-shrink: 0; }
+.nav { min-width: 0; }
+.nav a { white-space: nowrap; }
+.u-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; }
 .logo { width: 28px; height: 28px; border-radius: 7px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .title { font-size: 15px; }
 .nav { display: flex; gap: 2px; flex: 1; }
-.nav a { padding: 6px 14px; border-radius: 6px; color: var(--t2); text-decoration: none; font-size: 14px; }
+.nav a { padding: 8px 9px; border-radius: 6px; color: var(--t2); text-decoration: none; font-size: 14px; }
 .nav a.router-link-active { background: var(--blue-bg); color: var(--blue); font-weight: 600; }
 .exam-chip { display: flex; align-items: center; gap: 6px; background: var(--blue-bg);
   color: var(--blue-deep); font-weight: 700; border-radius: 6px; padding: 5px 12px; font-size: 13px; }
@@ -179,10 +184,22 @@ function goMore(to) {
 .more-sheet { display: none; }
 
 
+@media (min-width: 769px) and (max-width: 1279px) {
+  .topbar-inner { flex-wrap: wrap; padding-top: 8px; }
+  .right { margin-left: auto; }
+  .nav { order: 3; flex-basis: 100%; overflow-x: auto; padding-bottom: 8px; }
+}
+
 @media (max-width: 768px) {
   .nav { display: none; }
-  .topbar-inner { padding: 0 14px; gap: 8px; }
-  .title { font-size: 15px; }
+  .topbar-inner { padding: 0 12px; gap: 8px; min-height: 52px; }
+  .brand { gap: 6px; }
+  .bar-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .title { font-size: 14px; }
+  .exam-chip { gap: 3px; padding: 4px 6px; font-size: 12px; }
+  .exam-chip b { font-size: 15px; }
+  .avatar { width: 26px; height: 26px; }
+  .right { flex-shrink: 0; }
   .username span.u-name { display: none; }
   .right .ghost-btn { display: none; }  /* 退出在「更多」菜单里 */
   .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
@@ -195,7 +212,7 @@ function goMore(to) {
   }
   .tabbar a {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-    padding: 8px 0 6px; font-size: 10.5px; color: var(--t3); text-decoration: none;
+    padding: 8px 0 6px; font-size: 12px; color: var(--t2); text-decoration: none;
     transition: color .15s;
   }
   .tabbar a.router-link-active { color: var(--blue); font-weight: 600; }

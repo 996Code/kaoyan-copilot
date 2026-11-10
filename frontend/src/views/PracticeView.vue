@@ -31,9 +31,10 @@ function packActive(pk) {
   return activePack.value && activePack.value.label === pk.label
 }
 function applyPack(pk) {
-  activePack.value = pk
+  if (loading.value || submitting.value) return
   subject.value = pk.subject
   moduleCode.value = pk.module
+  activePack.value = pk
   minNumber.value = pk.min || null
   maxNumber.value = pk.max || null
   year.value = null
@@ -44,6 +45,11 @@ const maxNumber = ref(null)
 
 const questions = ref([])
 const loading = ref(false)
+const submitting = ref(false)
+const finished = ref(false)
+const loadError = ref('')
+const subjectsError = ref('')
+const started = ref(false)
 const current = ref(0)
 const myAnswer = ref(null)
 const checked = ref(null) // check 接口返回
@@ -80,7 +86,10 @@ const group = computed(() => {
 })
 
 async function start() {
+  if (loading.value || submitting.value || !moduleCode.value) return
   loading.value = true
+  loadError.value = ''
+  started.value = true
   try {
     const params = new URLSearchParams({ subject: subject.value, module: moduleCode.value, limit: String(count.value), random: 'true' })
     if (year.value) params.set('year', String(year.value))
@@ -90,11 +99,13 @@ async function start() {
     current.value = 0
     myAnswer.value = null
     checked.value = null
+    finished.value = false
     stats.done = 0
     stats.correct = 0
     if (!questions.value.length) message.warning('没有符合条件的题目')
   } catch (e) {
     if (e.status === 401) return
+    loadError.value = e.message
     message.error(e.message)
   } finally {
     loading.value = false
@@ -102,18 +113,28 @@ async function start() {
 }
 
 async function check() {
-  if (myAnswer.value == null || myAnswer.value === '') return
-  checked.value = await api('/api/practice/check', {
-    method: 'POST',
-    body: { question_id: item.value.id, answer: myAnswer.value },
-  })
-  stats.done += 1
-  if (checked.value.correct) stats.correct += 1
+  if (!item.value || loading.value || submitting.value || checked.value || finished.value || myAnswer.value == null || myAnswer.value === '') return
+  submitting.value = true
+  const answer = myAnswer.value
+  try {
+    checked.value = await api('/api/practice/check', {
+      method: 'POST',
+      body: { question_id: item.value.id, answer },
+    })
+    myAnswer.value = answer
+    stats.done += 1
+    if (checked.value.correct) stats.correct += 1
+  } catch (e) {
+    if (e.status !== 401) message.error(e.message)
+  } finally {
+    submitting.value = false
+  }
 }
 
 function next() {
+  if (!checked.value || submitting.value || finished.value) return
   if (current.value >= questions.value.length - 1) {
-    message.success(`本组完成：${stats.correct}/${stats.done} 正确`)
+    finished.value = true
     return
   }
   current.value += 1
@@ -121,14 +142,24 @@ function next() {
   checked.value = null
 }
 
+watch(subject, () => {
+  activePack.value = null
+  minNumber.value = maxNumber.value = null
+  year.value = null
+  moduleCode.value = moduleOptions.value[0]?.value
+}, { flush: 'sync' })
+watch(moduleCode, () => {
+  activePack.value = null
+  minNumber.value = maxNumber.value = null
+}, { flush: 'sync' })
 watch([subject, moduleCode, year, count], () => {
   remember('pf_state', { subject: subject.value, module: moduleCode.value, year: year.value, count: count.value })
 })
 
 function onKey(e) {
   const tag = (e.target.tagName || '').toLowerCase()
-  if (tag === 'textarea' || tag === 'input') return
-  if (!item.value) return
+  if (['textarea', 'input', 'button', 'select'].includes(tag) || e.target.isContentEditable || e.repeat) return
+  if (!item.value || loading.value || submitting.value || finished.value) return
   const letters = ['a', 'b', 'c', 'd', 'e']
   if (item.value.qtype === 'single_choice' && item.value.options && !checked.value) {
     const li = letters.indexOf(e.key.toLowerCase())
@@ -143,8 +174,9 @@ function onKey(e) {
   if (e.key === 'Enter' && checked.value) { next(); e.preventDefault() }
 }
 
-onMounted(async () => {
-  window.addEventListener('keydown', onKey)
+async function loadSubjects() {
+  subjectsError.value = ''
+  try {
   subjects.value = await api('/api/subjects')
   // 支持看板跳转预选：/practice?subject=gz199&module=math
   const qs = new URLSearchParams((location.hash.split('?')[1] || ''))
@@ -162,6 +194,16 @@ onMounted(async () => {
   }
   if (!qsOverride && mem.year !== undefined) year.value = mem.year
   if (!qsOverride && mem.count) count.value = mem.count
+  } catch (e) {
+    if (e.status !== 401) {
+      subjectsError.value = e.message
+      message.error(e.message)
+    }
+  }
+}
+onMounted(() => {
+  window.addEventListener('keydown', onKey)
+  loadSubjects()
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
@@ -174,23 +216,30 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:16px">
       <div class="packs">
         <span class="packs-label muted">专项包：</span>
-        <n-button v-for="pk in PACKS" :key="pk.label" size="small"
+        <n-button v-for="pk in PACKS" :key="pk.label" size="small" :disabled="loading || submitting || !subjects.length"
           :type="packActive(pk) ? 'primary' : 'default'" @click="applyPack(pk)">
           {{ pk.label }}
         </n-button>
       </div>
       <div class="filters" style="margin-top:10px">
-        <n-select v-model:value="subject" :options="subjects.map(s => ({ label: s.name, value: s.code }))"
-          style="width:200px" @update:value="moduleCode = moduleOptions[0]?.value" />
-        <n-select v-model:value="moduleCode" :options="moduleOptions" style="width:150px" />
-        <n-select v-model:value="year" :options="yearOptions" style="width:180px" />
-        <n-select v-model:value="count" :options="[{label:'10 题',value:10},{label:'20 题',value:20},{label:'30 题',value:30}]" style="width:100px" />
-        <n-button type="primary" :loading="loading" @click="start">开始练习</n-button>
+        <div class="filter-field"><span>科目</span><n-select v-model:value="subject" aria-label="练习科目" :input-props="{ 'aria-label': '练习科目' }" :disabled="loading || submitting" :options="subjects.map(s => ({ label: s.name, value: s.code }))" /></div>
+        <div class="filter-field"><span>模块</span><n-select v-model:value="moduleCode" aria-label="练习模块" :input-props="{ 'aria-label': '练习模块' }" :disabled="loading || submitting" :options="moduleOptions" /></div>
+        <div class="filter-field"><span>年份</span><n-select v-model:value="year" aria-label="练习年份" :input-props="{ 'aria-label': '练习年份' }" :disabled="loading || submitting" :options="yearOptions" /></div>
+        <div class="filter-field"><span>题量</span><n-select v-model:value="count" aria-label="练习题量" :input-props="{ 'aria-label': '练习题量' }" :disabled="loading || submitting" :options="[{label:'10 题',value:10},{label:'20 题',value:20},{label:'30 题',value:30}]" /></div>
+        <n-button type="primary" :loading="loading" :disabled="submitting || !subjects.length || !moduleCode" @click="start">开始练习</n-button>
       </div>
+      <div v-if="subjectsError" class="error-state" role="alert">{{ subjectsError }} <n-button @click="loadSubjects">重试科目加载</n-button></div>
     </n-card>
 
     <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
 
+    <div v-else-if="loadError" class="error-state" role="alert">{{ loadError }} <n-button @click="start">重试练习加载</n-button></div>
+    <div v-else-if="finished" class="finish-card panel">
+      <h3>本组练习完成</h3>
+      <p>已提交 {{ stats.done }} 题 · 答对 {{ stats.correct }} 题</p>
+      <n-button type="primary" @click="start">再练一组</n-button>
+    </div>
+    <div v-else-if="started && !questions.length" class="error-state">没有符合条件的题目，请调整筛选后重试。</div>
     <template v-else-if="item">
       <div class="pstats">
         <span>第 {{ current + 1 }} / {{ questions.length }} 题</span>
@@ -201,10 +250,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       </div>
 
       <div class="practice-card">
-        <GroupMaterial v-if="group" :group="group" />
-        <QuestionItem :q="item" v-model="myAnswer" :mode="checked ? 'review' : 'take'"
+        <GroupMaterial v-if="group" :key="item.group_id ?? item.id" :group="group" />
+        <div :inert="submitting">
+        <QuestionItem :key="item.id" :q="item" v-model="myAnswer" :mode="checked ? 'review' : 'take'"
           :result="checked ? { your_answer: myAnswer, correct_answer: checked.correct_answer } : null"
           :shared-options="group?.options" />
+        </div>
 
         <div v-if="checked" class="feedback">
           <div class="fb-line">
@@ -220,7 +271,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             <div class="section-title">解析</div>
             <div class="rich" v-html="renderRich(checked.analysis)"></div>
           </div>
-          <AiPanel :endpoint="`/api/ai/explain/${item.id}?student_answer=${encodeURIComponent(String(myAnswer ?? ''))}`"
+          <AiPanel :key="item.id" :endpoint="`/api/ai/explain/${item.id}?student_answer=${encodeURIComponent(String(myAnswer ?? ''))}`"
             label="AI 讲解本题" />
         </div>
 
@@ -228,10 +279,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <span class="kbd-hint">
             <kbd>A</kbd>-<kbd>E</kbd> 选题 · <kbd>Enter</kbd> {{ checked ? '下一题' : '确认' }}
           </span>
-          <n-button v-if="!checked" type="primary" :disabled="myAnswer == null || myAnswer === ''" @click="check">
+          <n-button v-if="!checked" type="primary" :loading="submitting" :disabled="submitting || myAnswer == null || myAnswer === ''" @click="check">
             确认答案
           </n-button>
-          <n-button v-else type="primary" @click="next">下一题 →</n-button>
+          <n-button v-else type="primary" @click="next">{{ current === questions.length - 1 ? '完成本组' : '下一题 →' }}</n-button>
         </div>
       </div>
     </template>
@@ -239,7 +290,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </template>
 
 <style scoped>
-.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.filters { display:grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, .8fr) auto; gap:10px; align-items:end; }
+.filter-field { display:grid; gap:6px; min-width:0; font-size:12px; color:var(--t2); }
+.filter-field :deep(.n-base-selection) { min-height:44px; }
+.filters > .n-button, .packs .n-button, .p-actions .n-button { min-height:44px; }
+.error-state { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; font-size:14px; }
+.finish-card { padding:28px 18px; text-align:center; }
 .packs { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .packs-label { font-size:12px; }
 @media (max-width: 768px) {
@@ -248,9 +304,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   .practice-card { padding: 14px; }
   .pstats { font-size: 12px; gap: 12px; }
 }
-.pstats { display: flex; gap: 18px; font-size: 13px; color: var(--t3); margin-bottom: 10px; }
+.pstats { display: flex; flex-wrap:wrap; gap: 18px; font-size: 13px; color: var(--t3); margin-bottom: 10px; }
 .practice-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
 .feedback { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-soft); }
-.fb-line { display: flex; align-items: center; margin-bottom: 8px; }
+.fb-line { display: flex; flex-wrap:wrap; gap:8px; align-items: center; margin-bottom: 8px; }
 .p-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+@media (max-width: 768px) {
+  .filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .filters > .n-button { grid-column:1 / -1; }
+  .p-actions { justify-content:flex-end; }
+  .practice-card { padding:14px; }
+}
 </style>

@@ -8,6 +8,8 @@ import AppIcon from '../components/AppIcon.vue'
 const message = useMessage()
 const loading = ref(true)
 const groups = ref([])
+const loadError = ref('')
+const failedCategory = ref(null)
 
 // 卡片流状态
 const active = ref(null) // 当前分类组
@@ -34,12 +36,16 @@ const grouped = computed(() => {
 })
 
 async function loadOverview() {
+  if (ratingBusy.value) return
   loading.value = true
+  loadError.value = ''
+  failedCategory.value = null
   active.value = null
   try {
     groups.value = await api('/api/knowledge/overview')
   } catch (e) {
     if (e.status === 401) return
+    loadError.value = e.message
     message.error(e.message)
   } finally {
     loading.value = false
@@ -47,7 +53,10 @@ async function loadOverview() {
 }
 
 async function openCategory(g) {
+  if (loading.value || ratingBusy.value) return
   loading.value = true
+  loadError.value = ''
+  failedCategory.value = g
   try {
     // 拉全量卡片 + 学习状态（overview 只给统计；卡片状态在 learn/复习后刷新 overview）
     const data = await api('/api/knowledge/states')
@@ -60,6 +69,7 @@ async function openCategory(g) {
     active.value = g
   } catch (e) {
     if (e.status === 401) return
+    loadError.value = e.message
     message.error(e.message)
   } finally {
     loading.value = false
@@ -67,7 +77,7 @@ async function openCategory(g) {
 }
 
 async function rate(fam) {
-  if (!card.value || ratingBusy.value) return
+  if (!card.value || !revealed.value || loading.value || ratingBusy.value) return
   ratingBusy.value = true
   try {
     await api('/api/knowledge/learn', {
@@ -87,6 +97,8 @@ async function rate(fam) {
 }
 
 function onKey(e) {
+  const tag = (e.target.tagName || '').toLowerCase()
+  if (['textarea', 'input', 'button', 'select'].includes(tag) || e.target.isContentEditable || e.repeat || loading.value || ratingBusy.value) return
   if (!active.value || !card.value) return
   if (!revealed.value && e.key === ' ') { revealed.value = true; e.preventDefault(); return }
   if (revealed.value) {
@@ -112,8 +124,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <span class="sub">公式 / 技法 / 谬误 / 句型，标记熟悉度即进 FSRS 复习队列</span>
       </div>
       <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
+      <div v-else-if="loadError" class="error-state" role="alert">{{ loadError }} <n-button @click="failedCategory ? openCategory(failedCategory) : loadOverview()">重试加载</n-button></div>
       <n-empty v-else-if="!groups.length" description="暂无知识卡" style="margin:60px 0" />
 
+      <template v-if="!loading && !loadError">
       <div v-for="g in grouped" :key="g.subject_code + g.module_name" style="margin-bottom:18px">
         <div class="section-title" style="font-size:14px">
           {{ subjectName(g.subject_code) }} · {{ g.module_name }}
@@ -134,12 +148,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           </n-card>
         </div>
       </div>
+      </template>
     </template>
 
     <!-- 卡片流 -->
     <template v-else>
       <div class="flow-head">
-        <n-button quaternary size="small" @click="loadOverview()">‹ 返回分类</n-button>
+        <n-button quaternary size="small" :disabled="ratingBusy" @click="loadOverview()">‹ 返回分类</n-button>
         <span class="nav-pos">{{ subjectName(active.subject_code) }} · {{ active.category }}
           <template v-if="cards.length">（{{ Math.min(idx + 1, cards.length) }} / {{ cards.length }}）</template>
         </span>
@@ -190,24 +205,34 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; }
 .cat { border-radius:var(--r-card); cursor:pointer; }
 .cat:hover { border-color:var(--blue); }
-.cat-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
-.cat-top b { font-size:14.5px; }
-.cat-num { font-size:12px; color:var(--t3); font-variant-numeric:tabular-nums; white-space:nowrap; margin-left:8px; }
+.cat-top { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:baseline; margin-bottom:8px; }
+.cat-top b { font-size:14.5px; min-width:0; overflow-wrap:anywhere; }
+.cat-num { font-size:12px; color:var(--t3); font-variant-numeric:tabular-nums; white-space:nowrap; flex-shrink:0; }
 .cat-foot { display:flex; justify-content:space-between; font-size:12px; margin-top:8px; }
-.flow-head { display:flex; align-items:center; gap:12px; margin:6px 0 12px; }
-.nav-pos { font-size:14px; font-weight:600; }
+.flow-head { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:12px; margin:6px 0 12px; }
+.flow-head .n-button { min-height:44px; }
+.nav-pos { font-size:14px; font-weight:600; overflow-wrap:anywhere; }
 .kcard { padding:26px 24px; min-height:300px; }
 .kcard-tag { display:flex; gap:8px; margin-bottom:14px; }
 .kfront { text-align:center; padding:18px 0 26px; }
-.ktitle { font-size:26px; font-weight:800; }
+.ktitle { font-size:26px; font-weight:800; overflow-wrap:anywhere; }
 .kback .rich { font-size:15.5px; line-height:1.9; }
-.krate { display:flex; gap:12px; justify-content:center; margin-top:22px; }
+.krate { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; max-width:480px; margin:22px auto 0; }
+.krate .n-button { min-width:0; min-height:44px; padding:0 8px; }
+.error-state { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; }
 .finish-card { text-align:center; padding:60px 0; }
 @media (max-width:768px) {
   .ktitle { font-size:21px; }
   .kcard { padding:18px 16px; }
-  .cat-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .cat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .cat :deep(.n-card__content) { padding:14px 12px; }
   .cat-top b { font-size:13px; }
-  .cat-foot { font-size:11px; }
+  .cat-foot { font-size:12px; gap:6px; flex-wrap:wrap; }
+  .go { flex-shrink:0; white-space:nowrap; }
+  .krate { gap:8px; }
+  .krate .n-button { font-size:14px; }
+}
+@media (max-width:420px) {
+  .cat-grid { grid-template-columns:minmax(0,1fr); }
 }
 </style>

@@ -9,8 +9,9 @@ const stageRef = ref(null) // 用 ref 引用 stage 元素，不走 querySelector
 function onClick(e) {
   if (visible.value) return
   const target = e.target
-  if (target.closest('.opt-row')) return // 选项点击不放大
-  const svg = target.closest('svg')
+  if (!(target instanceof Element)) return
+  if (target.closest('button, a, .opt-row, nav')) return
+  const svg = target.closest('.rich svg')
   const img = target.closest('img.chart-img, img.lightbox-img')
   if (!svg && !img) return
   e.preventDefault()

@@ -7,6 +7,7 @@ const message = useMessage()
 const BATCH = 20
 
 const loading = ref(true)
+const loadError = ref('')
 const words = ref([])
 const idx = ref(0)
 const learnedTotal = ref(0)
@@ -21,6 +22,7 @@ const percent = computed(() =>
 
 async function load() {
   loading.value = true
+  loadError.value = ''
   try {
     const data = await api(`/api/vocab/learn_batch?count=${BATCH}`)
     words.value = data.words
@@ -30,6 +32,7 @@ async function load() {
     batchStats.easy = batchStats.good = batchStats.hard = 0
   } catch (e) {
     if (e.status === 401) return
+    loadError.value = e.message
     message.error(e.message)
   } finally {
     loading.value = false
@@ -38,7 +41,7 @@ async function load() {
 
 const submitting = ref(false)
 async function mark(familiarity) {
-  if (!word.value || submitting.value) return
+  if (!word.value || loading.value || submitting.value) return
   submitting.value = true
   try {
     await api('/api/vocab/learn', {
@@ -57,6 +60,8 @@ async function mark(familiarity) {
 }
 
 function onKey(e) {
+  const tag = (e.target.tagName || '').toLowerCase()
+  if (['textarea', 'input', 'button', 'select'].includes(tag) || e.target.isContentEditable || e.repeat) return
   if (e.key === '1') { mark('hard'); e.preventDefault() }
   if (e.key === '2') { mark('good'); e.preventDefault() }
   if (e.key === '3') { mark('easy'); e.preventDefault() }
@@ -79,16 +84,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </div>
 
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:14px">
-      <div style="display:flex; align-items:center; gap:14px">
+      <div class="learned-progress">
         <span class="muted" style="font-size:13px; white-space:nowrap">
           已学 {{ learnedTotal }} / {{ totalWords }}（{{ percent }}%）
         </span>
-        <n-progress :percentage="percent" :height="8" style="flex:1" />
+        <n-progress :percentage="percent" :height="8" class="learned-bar" />
       </div>
     </n-card>
 
     <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
 
+    <div v-else-if="loadError" class="error-state" role="alert">{{ loadError }} <n-button @click="load">重试词汇加载</n-button></div>
     <n-empty v-else-if="!words.length" description="5530 词全部学完！去复习中心巩固吧 🎉" style="margin:60px 0">
       <template #extra>
         <n-button type="primary" @click="$router.push('/review')">去复习</n-button>
@@ -141,10 +147,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .vocab-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:26px 24px; text-align:center; }
 .batch-progress { font-size:13px; margin-bottom:10px; }
 .word-main { padding:14px 0 22px; }
-.word { font-size:46px; font-weight:800; letter-spacing:.5px; }
+.word { font-size:46px; font-weight:800; letter-spacing:0; overflow-wrap:anywhere; }
+.word-main { min-width:0; overflow-wrap:anywhere; }
+.learned-progress { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:14px; }
+.learned-bar { min-width:0; }
+.error-state { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; }
 .definition { font-size:19px; margin-top:10px; }
 .example { color:var(--t2); font-size:14px; line-height:1.7; margin-top:12px; }
-.mark-row { display:flex; gap:14px; justify-content:center; }
+.mark-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; max-width:480px; margin:0 auto; }
+.mark-row .n-button { min-width:0; min-height:44px; padding:0 8px; }
 .finish-card { text-align:center; padding:60px 0; }
 
 @media (max-width: 768px) {
@@ -152,5 +163,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   .definition { font-size: 16px; }
   .mark-row { gap: 8px; }
   .mark-row button { font-size: 14px !important; }
+  .learned-progress { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .vocab-card { padding:22px 16px; }
+  .finish-card > div:last-child { flex-wrap:wrap; }
 }
 </style>

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { NButton, NCard, NSpin, NTag, useDialog } from 'naive-ui'
+import { NButton, NCard, NEmpty, NSpin, NTag, useDialog } from 'naive-ui'
 import { api } from '../api'
 import { renderRich } from '../markdown'
 import QuestionItem from '../components/QuestionItem.vue'
@@ -30,7 +30,10 @@ const idx = ref(0)
 const showNav = ref(false)
 const currentItem = computed(() => filtered.value[idx.value] || null)
 
-watch(filter, () => { idx.value = 0 })
+watch(filter, () => {
+  idx.value = 0
+  showNav.value = false
+})
 
 function goto(i) {
   if (i < 0 || i >= filtered.value.length) return
@@ -101,7 +104,7 @@ const sectionStats = computed(() =>
         else if (r && r.is_correct === false) wrong += 1
       } else subjective += 1
     })
-    return { name: sec.name, earned: Math.round(earned * 10) / 10, total, wrong, subjective }
+    return { id: sec.id ?? si, name: sec.name, earned: Math.round(earned * 10) / 10, total, wrong, subjective }
   })
 )
 
@@ -118,7 +121,7 @@ const filtered = computed(() => {
   return items.value.filter(({ q }) => {
     const r = results.value[String(q.id)]
     if (filter.value === 'wrong') return r && r.is_correct === false
-    if (filter.value === 'unanswered') return !r || r.your_answer == null || r.your_answer === ''
+    if (filter.value === 'unanswered') return q.qtype === 'single_choice' && (!r || r.your_answer == null || r.your_answer === '')
     if (filter.value === 'subjective') return q.qtype !== 'single_choice'
     return true
   })
@@ -139,15 +142,17 @@ const counts = computed(() => {
     <div v-if="loading" style="display:flex;justify-content:center;padding-top:100px"><n-spin size="large" /></div>
     <template v-else-if="paper">
       <div class="report-head">
-        <div>
-          <h2 style="margin:0">
+        <div class="report-title-row">
+          <h2>
             <span class="rp-full">{{ paper.name }}</span>
-            <span class="rp-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }}</span>
-            <span class="rp-time muted">· {{ duration }}</span>
-            <n-tag v-if="exam.overtime" type="error" size="small" style="margin-left:6px">超时</n-tag>
+            <span class="rp-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : paper.subject_code === 'en2' ? '英二' : '模考' }}成绩</span>
           </h2>
+          <div class="report-meta">
+            <span class="rp-time muted">用时 {{ duration }}</span>
+            <n-tag v-if="exam.overtime" type="error" size="small">超时</n-tag>
+          </div>
         </div>
-        <div style="display:flex; gap:10px">
+        <div class="report-actions">
           <n-button @click="$router.push(`/papers/${paper.subject_code}`)">返回试卷列表</n-button>
           <n-button type="primary" @click="$router.push(`/exam/${paper.id}`)">再考一次</n-button>
         </div>
@@ -168,16 +173,16 @@ const counts = computed(() => {
         </n-card>
         <n-card class="score-card" :bordered="false">
           <div class="sc-label">主观题</div>
-          <div class="sc-value" style="font-size:20px">待 AI 批改<small>（即将上线）</small></div>
+          <div class="sc-value sc-subjective">{{ items.filter(it => it.q.qtype !== 'single_choice').length }}<small> 题可批改</small></div>
         </n-card>
       </div>
 
-      <n-card :bordered="false" style="border-radius:12px; margin-bottom:16px">
+      <n-card :bordered="false" style="border-radius:8px; margin-bottom:16px">
         <div class="sec-table">
           <div class="sec-row sec-head-row">
             <span>分区</span><span>客观得分</span><span>错题</span><span>主观题</span>
           </div>
-          <div v-for="s in sectionStats" :key="s.name" class="sec-row">
+          <div v-for="s in sectionStats" :key="s.id" class="sec-row">
             <span>{{ s.name }}</span>
             <span class="bold">{{ s.earned }} / {{ s.total }}</span>
             <span :style="s.wrong ? 'color:var(--bad)' : ''">{{ s.wrong }}</span>
@@ -191,13 +196,20 @@ const counts = computed(() => {
           错题 {{ counts.wrong }}
         </n-button>
         <n-button size="small" :type="filter === 'unanswered' ? 'primary' : 'default'" @click="filter = 'unanswered'">
-          未答 {{ counts.unanswered }}
+          客观未答 {{ counts.unanswered }}
         </n-button>
         <n-button size="small" :type="filter === 'subjective' ? 'primary' : 'default'" @click="filter = 'subjective'">
           主观题参考
         </n-button>
         <n-button size="small" :type="filter === 'all' ? 'primary' : 'default'" @click="filter = 'all'">全部</n-button>
       </div>
+
+      <n-empty v-if="!filtered.length" class="review-empty"
+        :description="filter === 'wrong' ? '本次没有错题' : filter === 'unanswered' ? '客观题均已作答' : filter === 'subjective' ? '本卷没有主观题' : '本卷暂无题目'">
+        <template v-if="filter !== 'all' && items.length" #extra>
+          <n-button @click="filter = 'all'">查看全部题目</n-button>
+        </template>
+      </n-empty>
 
       <!-- 导航条 + 答题卡开关 -->
       <div v-if="filtered.length" class="nav-bar panel" style="margin-bottom:12px">
@@ -208,13 +220,15 @@ const counts = computed(() => {
       </div>
 
       <!-- 答题卡面板 -->
-      <div v-if="showNav" class="nav-grid panel" style="margin-bottom:12px;padding:12px 14px">
+      <div v-if="showNav && filtered.length" class="nav-grid panel" style="margin-bottom:12px;padding:12px 14px">
         <div class="anscard">
-          <div v-for="(it, i) in filtered" :key="it.q.id" class="cell"
+          <button v-for="(it, i) in filtered" :key="it.q.id" type="button" class="cell"
             :class="{ answered: results[String(it.q.id)]?.is_correct === true, current: i === idx }"
-            @click="goto(i)">{{ it.q.number || i + 1 }}</div>
+            :aria-label="`第 ${it.q.number ?? '未标号'} 题，${sections[it.sectionIndex]?.name}`"
+            :aria-current="i === idx ? 'step' : undefined"
+            @click="goto(i)">{{ it.q.number ?? '—' }}</button>
         </div>
-        <div class="muted" style="font-size:11.5px;margin-top:8px">深色＝答对 · 橙框＝当前</div>
+        <div class="muted nav-legend">深色＝答对 · 橙框＝当前</div>
       </div>
 
       <div v-if="currentItem" :key="currentItem.q.id" class="review-card">
@@ -222,7 +236,7 @@ const counts = computed(() => {
           <n-tag :type="results[String(currentItem.q.id)]?.is_correct === true ? 'success'
             : results[String(currentItem.q.id)]?.is_correct === false ? 'error' : 'info'" size="small">
             {{ results[String(currentItem.q.id)]?.is_correct === true ? '答对'
-              : results[String(currentItem.q.id)]?.is_correct === false ? '答错' : '主观题' }}
+              : results[String(currentItem.q.id)]?.is_correct === false ? '答错' : currentItem.q.qtype === 'single_choice' ? '未作答' : '主观题' }}
           </n-tag>
           <n-tag v-if="currentItem.q.disputed" type="warning" size="small">该题答案存在版本争议</n-tag>
           <span class="muted" style="font-size:12px">
@@ -259,6 +273,7 @@ const counts = computed(() => {
 
         <!-- 错题：AI 讲解 -->
         <AiPanel v-if="results[String(currentItem.q.id)]?.is_correct === false"
+          :key="`explain-${exam.id}-${currentItem.q.id}`"
           :endpoint="`/api/ai/explain/${currentItem.q.id}?student_answer=${encodeURIComponent(results[String(currentItem.q.id)]?.your_answer || '')}`" />
 
         <!-- 主观题：AI 批改 -->
@@ -297,43 +312,67 @@ const counts = computed(() => {
 </template>
 
 <style scoped>
-.report-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 14px; }
-.score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.score-card { border-radius: 14px; text-align: center; }
-.score-card.main { background: linear-gradient(135deg, rgba(47,111,237,.12), rgba(106,92,255,.08)); }
-.sc-label { font-size: 12.5px; color: var(--t3); }
-.sc-value { font-size: 30px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.page { font-size: 14px; }
+.report-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 18px 0 14px; }
+.report-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; flex: 1; }
+.report-title-row h2 { min-width: 0; margin: 0; font-size: 20px; overflow-wrap: anywhere; }
+.report-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0; }
+.rp-time { font-size: 13px; font-weight: 400; white-space: nowrap; }
+.report-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+.score-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.score-card { border-radius: 8px; text-align: center; min-width: 0; }
+.score-card.main { background: var(--blue-bg); }
+.sc-label { font-size: 13px; color: var(--t3); }
+.sc-value { font-size: 28px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .sc-value small { font-size: 14px; color: var(--t3); font-weight: 500; }
+.sc-subjective { font-size: 24px; }
 .sec-table { font-size: 14px; }
-.sec-row { display: grid; grid-template-columns: 2fr 1fr .6fr .8fr; padding: 7px 4px; border-bottom: 1px dashed var(--line-soft); }
+.sec-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(75px, 1fr) 48px 60px; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.sec-row > span { min-width: 0; overflow-wrap: anywhere; }
+.sec-row > span:not(:first-child) { text-align: right; }
 .sec-row:last-child { border-bottom: none; }
-.sec-head-row { color: var(--t3); font-size: 12.5px; }
-.filter-bar { display: flex; gap: 8px; margin: 4px 0 14px; }
-.review-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
-.rc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.verdict { margin-top: 10px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; }
+.sec-head-row { color: var(--t3); font-size: 12px; }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.review-empty { padding: 32px 0; }
+.review-card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
+.rc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.rc-head > span { min-width: 0; overflow-wrap: anywhere; }
+.verdict { margin-top: 10px; padding: 8px 12px; background: var(--line-soft); border-radius: 8px; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }
 .analysis { margin-top: 10px; }
 .rp-short { display: none; }
+.nav-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 8px 10px; gap: 6px; }
+.nav-pos { font-size: 14px; color: var(--t2); font-variant-numeric: tabular-nums; }
+.nav-legend { font-size: 12px; margin-top: 10px; }
+.anscard { gap: 8px; }
+.anscard .cell { width: 44px; height: 44px; font-size: 14px; font-family: inherit; }
+.toggle { cursor: pointer; user-select: none; min-height: 44px; display: flex; align-items: center; }
+.page :deep(.n-button) { min-height: 44px; font-size: 14px; }
+.ai-grade { margin-top: 10px; }
+.grade-card { margin-top: 8px; border: 1px solid var(--line); background: var(--warn-bg); border-radius: 8px; padding: 12px 14px; }
+.grade-score { font-size: 15px; margin-bottom: 8px; }
+.grade-score b { font-size: 22px; color: var(--warn-ink); }
+.grade-dims { display: grid; gap: 10px; }
+.dim-row { display: grid; grid-template-columns: 110px 70px minmax(0, 1fr); gap: 10px; font-size: 14px; align-items: baseline; }
+.dim-name { font-weight: 600; overflow-wrap: anywhere; }
+.dim-score { color: var(--warn-ink); font-variant-numeric: tabular-nums; }
+.dim-comment { overflow-wrap: anywhere; }
+.grade-sug ul { margin: 4px 0; padding-left: 20px; }
 @media (max-width: 768px) {
   .rp-full { display: none; }
   .rp-short { display: inline; }
-  .report-head { flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; }
-  .report-head > div:first-child { flex: 1; min-width: 0; }
-  .report-head > div:last-child { flex: none; }
-  .report-head h2 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rp-time { font-size: 13px; font-weight: 400; }
+  .report-head { flex-direction: column; align-items: stretch; gap: 10px; padding: 8px 0; }
+  .report-title-row { width: 100%; gap: 8px; }
+  .report-title-row h2 { font-size: 18px; }
+  .report-actions { justify-content: flex-end; gap: 8px; }
+  .score-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .score-card :deep(.n-card__content) { padding: 12px 8px; }
+  .sc-value { font-size: 24px; }
+  .sec-row { grid-template-columns: minmax(0, 1fr) 76px 32px 42px; gap: 6px; }
+  .sec-table { font-size: 14px; }
+  .review-card { padding: 12px; }
+  .dim-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
+  .dim-score { text-align: right; }
+  .dim-comment { grid-column: 1 / -1; }
 }
-.nav-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; gap:8px; }
-.nav-pos { font-size:13.5px; color:var(--t2); font-variant-numeric:tabular-nums; }
-.toggle { cursor: pointer; user-select: none; }
-.ai-grade { margin-top: 10px; }
-.grade-card { margin-top: 8px; border: 1px solid rgba(240,160,32,.35); background: rgba(240,160,32,.06); border-radius: 10px; padding: 12px 14px; }
-.grade-score { font-size: 15px; margin-bottom: 8px; }
-.grade-score b { font-size: 22px; color: var(--warn-ink); }
-.grade-dims { display: grid; gap: 4px; }
-.dim-row { display: grid; grid-template-columns: 110px 70px 1fr; gap: 10px; font-size: 13.5px; align-items: baseline; }
-.dim-name { font-weight: 600; }
-.dim-score { color: var(--warn-ink); font-variant-numeric: tabular-nums; }
-.grade-sug ul { margin: 4px 0; padding-left: 20px; }
 </style>

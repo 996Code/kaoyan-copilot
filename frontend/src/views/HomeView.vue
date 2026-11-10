@@ -3,14 +3,16 @@ import { computed, onMounted, ref } from 'vue'
 import { NButton, NCard, NEmpty, NTag } from 'naive-ui'
 import { api } from '../api'
 import AppIcon from '../components/AppIcon.vue'
+import { useMediaQuery } from '../composables/useMediaQuery'
 
 const plan = ref(null)
 const history = ref([])
 const trends = ref(null)
 const calendar = ref(null)
-const dataTab = ref('trend')  // 移动端数据区 Tab：trend / mods / week
-const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768
-const showTab = (name) => !isMobile || dataTab.value === name
+const dataTab = ref('mods')
+const isMobile = useMediaQuery('(max-width: 768px)')
+const hasTrends = computed(() => Object.values(trends.value?.subjects || {}).some(s => s.count > 0))
+const showTab = (name) => !isMobile.value || dataTab.value === name
 const error = ref('')
 
 onMounted(async () => {
@@ -18,6 +20,7 @@ onMounted(async () => {
     plan.value = await api('/api/plan/today')
     history.value = await api('/api/exams/history')
     trends.value = await api('/api/plan/trends')
+    if (hasTrends.value) dataTab.value = 'trend'
     calendar.value = await api('/api/plan/calendar')
   } catch (e) {
     error.value = e.message
@@ -25,7 +28,7 @@ onMounted(async () => {
 })
 
 const dueTotal = computed(() =>
-  plan.value ? plan.value.due.wrong_question + plan.value.due.word : 0
+  plan.value ? Object.values(plan.value.due).reduce((sum, n) => sum + n, 0) : 0
 )
 const weakTop = computed(() => plan.value?.weak_modules?.[0] || null)
 const wordPercent = computed(() =>
@@ -46,7 +49,7 @@ const sortedModules = computed(() =>
       <div class="mh-num">{{ plan?.days_left ?? '—' }}<small>天</small></div>
       <div class="mh-text">
         <b>距 2027 考研初试</b>
-        <span class="mh-sub">目标 120 / 55</span>
+        <span class="mh-sub">管综目标 120 · 英二目标 55</span>
       </div>
     </div>
 
@@ -127,7 +130,7 @@ const sortedModules = computed(() =>
 
     <!-- 数据区 Tab（置于面板上方，移动端显示） -->
     <div class="data-tabs">
-      <n-button size="small" :type="dataTab === 'trend' ? 'primary' : 'default'" v-if="trends?.subjects.gz199.count" @click="dataTab = 'trend'">过线预测</n-button>
+      <n-button size="small" :type="dataTab === 'trend' ? 'primary' : 'default'" v-if="hasTrends" @click="dataTab = 'trend'">过线预测</n-button>
       <n-button size="small" :type="dataTab === 'mods' ? 'primary' : 'default'" @click="dataTab = 'mods'">模块正确率</n-button>
       <n-button size="small" :type="dataTab === 'week' ? 'primary' : 'default'" @click="dataTab = 'week'">近况</n-button>
     </div>
@@ -135,9 +138,11 @@ const sortedModules = computed(() =>
     <!-- 模考趋势与过线预测 -->
     <div v-if="trends && (trends.subjects.gz199.count || trends.subjects.en2.count)" style="margin-bottom: 12px" v-show="showTab('trend')">
       <div class="panel">
-        <div class="panel-h"><b>模考趋势与过线预测</b>
-          <span class="tr-hint muted">估分=客观+AI批改</span>
-        </div>
+        <div class="panel-h"><b>模考成绩趋势</b></div>
+        <details class="trend-method">
+          <summary>估分与预测口径</summary>
+          <p>估分为客观得分与已批改主观得分之和，未批改部分不代表零分。趋势预测只供复盘参考，非经校准的考试通过概率。</p>
+        </details>
         <div class="trend-grid">
           <div v-for="(sub, code) in trends.subjects" :key="code" class="tr-col" v-show="sub.count">
             <div class="tr-head">
@@ -228,7 +233,8 @@ const sortedModules = computed(() =>
 .kb-head h1 { font-size: 20px; font-weight: 700; margin: 0; }
 .kb-head .sub { color: var(--t3); font-size: 13px; }
 
-.task-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+.task-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.task { min-width: 0; }
 .task { padding: 16px; cursor: pointer; transition: border-color .15s; }
 .task:hover { border-color: var(--blue); }
 .th { display: flex; gap: 11px; align-items: center; margin-bottom: 12px; }
@@ -247,6 +253,11 @@ const sortedModules = computed(() =>
 .track i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
 
 .data-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 12px; }
+.data-grid > * { min-width: 0; }
+.data-grid > div:last-child { display: grid; gap: 12px; align-content: start; }
+.trend-method { padding: 10px 16px; color: var(--t2); font-size: 13px; }
+.trend-method summary { cursor: pointer; }
+.trend-method p { margin-bottom: 0; line-height: 1.65; }
 .mods { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .mods td { padding: 11px 18px; border-bottom: 1px solid var(--line-soft); }
 .mods tr:last-child td { border-bottom: none; }
@@ -319,9 +330,13 @@ const sortedModules = computed(() =>
   .tr-col { padding: 12px 14px; }
   .tr-nums { gap: 0; justify-content: space-around; }
   .tr-v { font-size: 17px; }
-  .tr-l { font-size: 9.5px; }
+  .tr-l { font-size: 12px; }
   .tr-cell { min-width: 0; }
-  .trend-grid { grid-template-columns: 1fr; }
+  .tr-v { white-space: nowrap; }
+  .tr-bar-v, .tr-bar-d, .wd, .wv, .cal-legend { font-size: 12px; }
+  .tr-bars { overflow-x: auto; }
+  .tr-bar-col { min-width: 44px; }
+  .trend-grid { grid-template-columns: minmax(0, 1fr); }
   .tr-col + .tr-col { border-left: none; border-top: 1px solid var(--line-soft); }
   .m-hero {
     display: flex; align-items: center; gap: 16px;
@@ -329,10 +344,12 @@ const sortedModules = computed(() =>
     border-radius: var(--r-card); color: #fff;
     padding: 18px 20px; margin: 10px 0 14px;
   }
-  .mh-num { font-size: 46px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .mh-num { font-size: 40px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .mh-text { min-width: 0; }
+  .mh-num { flex-shrink: 0; }
   .mh-num small { font-size: 15px; font-weight: 600; margin-left: 2px; opacity: .85; }
   .mh-text b { display: block; font-size: 16px; }
-  .mh-text span { display: block; font-size: 11px; opacity: .82; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .mh-text span { display: block; font-size: 12px; opacity: .9; margin-top: 4px; }
   .kb-head { display: none; }
 
   /* 任务卡 2×2 紧凑排版 */
@@ -344,8 +361,8 @@ const sortedModules = computed(() =>
   .th b { font-size: 13px; }
   .th span { display: none; }
   .tv { font-size: 20px; }
-  .tv small { font-size: 10px; }
-  .tl { font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+  .tv small { font-size: 12px; }
+  .tl { font-size: 12px; min-height: 20px; flex-wrap: wrap; }
   .tl .go { display: none; }
   .track { margin-top: 6px; }
 

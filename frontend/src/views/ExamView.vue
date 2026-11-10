@@ -20,6 +20,7 @@ const flat = ref([]) // [{q, group, sectionIndex}]
 const sections = ref([])
 const current = ref(0)
 const saving = ref(false)
+const saveFailed = ref(false)
 const savedAt = ref('')
 const submitting = ref(false)
 const confirmSubmit = ref(false)
@@ -86,7 +87,12 @@ async function saveNow() {
   try {
     await api(`/api/exams/${exam.value.id}/answers`, { method: 'PUT', body: { answers: { ...answers } } })
     savedAt.value = new Date().toLocaleTimeString('zh-CN', { hour12: false })
-  } catch { /* 稍后重试 */ } finally {
+    saveFailed.value = false
+    return true
+  } catch {
+    saveFailed.value = true
+    return false
+  } finally {
     saving.value = false
   }
 }
@@ -145,8 +151,12 @@ function onKey(e) {
 
 /* ---------- 交卷 ---------- */
 async function exitExam() {
-  await saveNow()
-  message.success('进度已保存，回来可继续作答')
+  const saved = await saveNow()
+  if (saved === false) {
+    message.error('进度尚未保存，请重试后退出')
+    return
+  }
+  message.success('进度已保存，回来可继续作答；考试计时仍会继续')
   router.push(`/papers/${paper.value?.subject_code || 'gz199'}`)
 }
 
@@ -198,7 +208,7 @@ onBeforeUnmount(() => {
     <template v-else-if="item">
       <!-- 顶栏 -->
       <div class="exam-topbar">
-        <button class="exit-btn" @click="exitExam" title="保存并退出">‹</button>
+        <button class="exit-btn" @click="exitExam" title="保存并退出" aria-label="保存并退出">‹</button>
         <div class="et-left">
           <b><span class="pn-full">{{ paper.name }}</span><span class="pn-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }}真题</span></b>
           <span class="muted et-section">{{ sectionName }}</span>
@@ -213,6 +223,10 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <div class="exam-progress-line">
+        <span>{{ sectionName }}</span>
+        <span role="status" :class="{ 'save-failed': saveFailed }">{{ saveFailed ? '保存失败，请重试' : saving ? '保存中' : savedAt ? '已保存' : '自动保存' }}</span>
+      </div>
       <div class="exam-body">
         <!-- 题目区 -->
         <div class="q-area">
@@ -224,7 +238,7 @@ onBeforeUnmount(() => {
           <div :class="isReadingSplit ? 'split reading-split' : ''">
             <!-- 共享材料 -->
             <div v-if="item.group" class="material-pane">
-              <GroupMaterial :group="item.group" :blanks="clozeBlanks"
+              <GroupMaterial :key="item.group.id" :group="item.group" :blanks="clozeBlanks"
                 :current-number="item.q.number" @jump="jumpNumber" />
             </div>
             <!-- 题目 -->
@@ -269,6 +283,7 @@ onBeforeUnmount(() => {
         :content="`还有 ${flat.length - answeredCount} 题未作答，交卷后立即出分。`"
         positive-text="交卷" negative-text="继续作答" @positive-click="doSubmit()" />
 
+      <div v-if="showCard" class="card-backdrop" @click="showCard = false"></div>
       <!-- 移动端答题卡浮钮 -->
       <button class="card-fab" @click="showCard = !showCard">
         答题卡 {{ answeredCount }}/{{ flat.length }}
@@ -278,71 +293,61 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.exam-page { min-height: 100vh; background: #fff; }
+.exam-page { min-height: 100vh; background: var(--card); }
 .loading-center { display: flex; justify-content: center; padding-top: 120px; }
-.exam-topbar { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 20px; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line-soft); }
-.exit-btn { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--card); color: var(--t2); font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+.exam-topbar { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--line-soft); }
+.exit-btn { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: var(--r-btn);
+  background: var(--card); color: var(--t2); font-size: 24px; cursor: pointer; flex: none; }
 .exit-btn:hover { border-color: var(--blue); color: var(--blue); }
-.et-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; max-width: 60%; }
+.et-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; }
 .et-left b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pn-short { display: none; }
 .et-section { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .et-right { display: flex; align-items: center; gap: 14px; flex: none; }
-.countdown { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; }
-.countdown.urgent { color: var(--bad); animation: pulse 1s infinite; }
-.countdown.overtime { color: var(--bad); }
-@keyframes pulse { 50% { opacity: .55; } }
+.countdown { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; white-space: nowrap; }
+.countdown.urgent, .countdown.overtime, .save-failed { color: var(--bad); }
 .autosave { font-size: 12px; }
-.progress { font-size: 13px; font-variant-numeric: tabular-nums; }
+.progress { font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.exam-progress-line { display: none; }
 .exam-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px;
-  max-width: var(--page-max); margin: 0 auto; padding: 20px; }
-.anscard-close { display: none; }
-.card-fab { display: none; }
-@media (max-width: 768px) {
-  .qcard, .gmat { border-radius: var(--r-card); }
-  .exam-topbar { padding: 8px 14px; }
-  .et-left { flex: 0 1 auto; max-width: 46%; }
-  .pn-full { display: none; }
-  .pn-short { display: inline; }
-  .et-section { display: none; }
-  .autosave { display: none; }
-  .countdown { font-size: 18px; }
-  .et-right { gap: 10px; }
-}
+  max-width: 1440px; margin: 0 auto; padding: 20px; }
+.section-instr { font-size: 13px; padding: 8px 12px; background: var(--bg); border-radius: var(--r-btn); margin-bottom: 12px; }
+.material-pane, .q-pane, .q-area { min-width: 0; }
+.reading-split { align-items: start; }
+.q-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
+.anscard-pane { position: sticky; top: 84px; align-self: start; max-height: calc(100dvh - 100px); overflow: auto;
+  border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px; background: var(--bg); }
+.anscard-title { font-weight: 700; margin-bottom: 4px; }
+.anscard-close, .card-fab, .card-backdrop { display: none; }
 @media (max-width: 980px) {
-  .exam-body { grid-template-columns: 1fr; padding: 14px; padding-bottom: 84px; }
-  .anscard-pane {
-    position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important; z-index: 30;
-    max-height: 62vh !important; border-radius: 16px 16px 0 0;
-    transform: translateY(105%) !important; transition: transform .25s ease;
-    box-shadow: 0 -8px 30px rgba(20,30,60,.15);
-  }
-  .anscard-pane.open { transform: translateY(0) !important; }
-  .anscard-close { display: block; text-align: center; font-size: 13px; color: var(--blue);
-    padding: 8px 0 4px; cursor: pointer; }
-  .card-fab {
-    display: block; position: fixed; right: 14px; bottom: calc(74px + env(safe-area-inset-bottom));
-    z-index: 25; border: none; border-radius: 24px; padding: 10px 16px;
-    background: var(--blue); color: #fff; font-size: 13px; font-weight: 600;
-    box-shadow: 0 6px 18px rgba(47,111,237,.4); cursor: pointer;
-  }
-  .q-nav {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    background: rgba(255,255,255,.95); backdrop-filter: blur(8px);
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-soft);
-    margin: 0; max-width: none; gap: 8px;
-  }
-  .q-nav .n-button { flex: 1; }
+  .exam-body { grid-template-columns: minmax(0, 1fr); padding: 14px; padding-bottom: 150px; }
+  .anscard-pane { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 50;
+    max-height: 68dvh; border-radius: 12px 12px 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(110%); visibility: hidden; pointer-events: none; transition: transform .2s ease; }
+  .anscard-pane.open { transform: translateY(0); visibility: visible; pointer-events: auto; }
+  .anscard-close { display: block; text-align: right; font-size: 14px; color: var(--blue);
+    padding: 12px 0; cursor: pointer; }
+  .card-backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 49; }
+  .card-fab { display: block; position: fixed; right: 14px; bottom: calc(80px + env(safe-area-inset-bottom));
+    z-index: 25; min-height: 44px; border: none; border-radius: var(--r-btn); padding: 10px 16px;
+    background: var(--blue); color: #fff; font-size: 14px; cursor: pointer; }
+  .q-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: var(--card); padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line-soft); margin: 0; }
+  .q-nav .n-button { flex: 1; min-height: 44px; }
   .q-nav .kbd-hint { display: none; }
 }
-.section-instr { font-size: 12.5px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; margin-bottom: 12px; }
-.material-pane { min-width: 0; }
-.q-pane { min-width: 0; }
-.reading-split { align-items: start; }
-.q-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
-.anscard-pane { position: sticky; top: 66px; align-self: start; max-height: calc(100vh - 90px); overflow: auto;
-  border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg); }
-.anscard-title { font-weight: 700; margin-bottom: 4px; }
+@media (max-width: 768px) {
+  .exam-topbar { padding: 8px 12px; gap: 8px; }
+  .et-left { min-width: 0; }
+  .et-left b { font-size: 14px; }
+  .pn-full, .et-section, .autosave, .progress { display: none; }
+  .pn-short { display: inline; }
+  .countdown { font-size: 16px; }
+  .et-right { gap: 8px; }
+  .et-right .n-button { min-height: 44px; }
+  .exam-progress-line { display: flex; justify-content: space-between; gap: 12px; padding: 8px 14px;
+    color: var(--t2); font-size: 12px; border-bottom: 1px solid var(--line-soft); }
+}
 </style>

@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  NButton, NCard, NInput, NSpin, NTabs, NTabPane, NTag, useDialog, useMessage,
+  NButton, NCard, NForm, NFormItem, NInput, NModal, NSpin, NTabs, NTabPane, NTag, useDialog, useMessage,
 } from 'naive-ui'
 import { api } from '../api'
 
@@ -77,26 +77,54 @@ function fmt(dt) {
   return dt ? String(dt).replace('T', ' ').slice(0, 16) : '—'
 }
 
+const resetModalOpen = ref(false)
+const resetUser = ref(null)
+const resetForm = reactive({ password: '', confirmPassword: '' })
+const resetError = ref('')
+const resetSaving = ref(false)
+
 function resetPassword(u) {
-  dialog.warning({
-    title: `重置 ${u.username} 的密码`,
-    content: '输入新密码（至少 4 位）',
-    positiveText: '重置',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      // naive-ui dialog 无输入框，这里用 prompt 简化（内部工具可用）
-      const pwd = window.prompt(`给 ${u.username} 设置新密码（至少 4 位）`)
-      if (!pwd || pwd.length < 4) return
-      try {
-        await api(`/api/admin/users/${u.id}/reset_password`, {
-          method: 'POST', body: { password: pwd },
-        })
-        message.success(`已重置 ${u.username} 的密码`)
-      } catch (e) {
-        message.error(e.message)
-      }
-    },
-  })
+  resetUser.value = u
+  resetForm.password = ''
+  resetForm.confirmPassword = ''
+  resetError.value = ''
+  resetModalOpen.value = true
+}
+
+function closeResetModal() {
+  if (resetSaving.value) return
+  resetModalOpen.value = false
+  resetUser.value = null
+  resetForm.password = ''
+  resetForm.confirmPassword = ''
+  resetError.value = ''
+}
+
+async function submitResetPassword() {
+  if (resetSaving.value || !resetUser.value) return
+  resetError.value = ''
+  if (resetForm.password.length < 4 || resetForm.password.length > 64) {
+    resetError.value = '新密码长度须为 4 至 64 位'
+    return
+  }
+  if (resetForm.password !== resetForm.confirmPassword) {
+    resetError.value = '两次输入的密码不一致'
+    return
+  }
+  const u = resetUser.value
+  resetSaving.value = true
+  try {
+    await api(`/api/admin/users/${u.id}/reset_password`, {
+      method: 'POST', body: { password: resetForm.password },
+    })
+    message.success(`已重置 ${u.username} 的密码`)
+    resetSaving.value = false
+    closeResetModal()
+  } catch (e) {
+    resetError.value = e.message || '重置失败，请重试'
+  } finally {
+    resetSaving.value = false
+  }
 }
 
 function removeUser(u) {
@@ -143,7 +171,7 @@ onMounted(load)
     <n-tabs v-else type="line" animated>
       <!-- 用户管理 -->
       <n-tab-pane name="users" tab="用户管理">
-        <n-card :bordered="false" style="border-radius:12px">
+        <n-card :bordered="false" class="user-table">
           <div class="tbl head">
             <span>用户</span><span>注册</span><span>模考</span><span>作答</span><span>正确率</span>
             <span>待巩固</span><span>记忆卡</span><span>已学词</span><span>最近活跃</span><span>操作</span>
@@ -153,7 +181,7 @@ onMounted(load)
               <b>{{ u.username }}</b>
               <n-tag v-if="u.is_admin" type="info" size="tiny" style="margin-left:4px">管理员</n-tag>
             </span>
-            <span class="muted">{{ fmt(u.created_at) }}</span>
+            <span class="muted time-cell"><span>{{ fmt(u.created_at).split(' ')[0] }}</span><span>{{ fmt(u.created_at).split(' ')[1] }}</span></span>
             <span>{{ u.exams }}</span>
             <span>{{ u.answers }}</span>
             <span :style="u.accuracy != null && u.accuracy < 60 ? 'color:var(--bad)' : ''">
@@ -162,7 +190,7 @@ onMounted(load)
             <span>{{ u.wrong_active }}</span>
             <span>{{ u.cards }}</span>
             <span>{{ u.words_learned }}</span>
-            <span class="muted">{{ fmt(u.last_active) }}</span>
+            <span class="muted time-cell"><span>{{ fmt(u.last_active).split(' ')[0] }}</span><span>{{ fmt(u.last_active).split(' ')[1] }}</span></span>
             <span class="ops">
               <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
               <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
@@ -181,24 +209,31 @@ onMounted(load)
               <div class="ucs"><b>{{ u.exams }}</b><span>模考</span></div>
               <div class="ucs"><b>{{ u.answers }}</b><span>作答</span></div>
               <div class="ucs" :style="u.accuracy != null && u.accuracy < 60 ? 'color:var(--bad)' : ''">
-                <b>{{ u.accuracy ?? '—' }}%</b><span>正确率</span>
+                <b>{{ u.accuracy != null ? u.accuracy + '%' : '—' }}</b><span>正确率</span>
               </div>
-              <div class="ucs"><b>{{ u.wrong_active }}</b><span>错题</span></div>
+              <div class="ucs"><b>{{ u.wrong_active }}</b><span>待巩固错题</span></div>
               <div class="ucs"><b>{{ u.cards }}</b><span>记忆卡</span></div>
               <div class="ucs"><b>{{ u.words_learned }}</b><span>已学词</span></div>
             </div>
             <div class="uc-foot">
-              <span class="muted">活跃 {{ fmt(u.last_active) }}</span>
-              <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
-              <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
+              <span class="muted">最近活跃：{{ fmt(u.last_active) }}</span>
+              <details class="user-details">
+                <summary>注册信息</summary>
+                <p>注册时间：{{ fmt(u.created_at) }}</p>
+              </details>
+              <div class="uc-actions">
+                <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
+                <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
+              </div>
             </div>
           </div>
         </div>
 
-        <p class="muted admin-note" style="font-size:12.5px; margin-top:8px">
-          数据口径：模考=已交卷场次；作答=有判分结果的客观题；待巩固=错题本未消灭条目；记忆卡=FSRS 卡片（错题+单词）。
-          删除用户会级联清理其全部个人数据，题库与试卷等公共数据不受影响。
-        </p>
+        <details class="admin-note muted">
+          <summary>统计口径与删除说明</summary>
+          <p>模考：已交卷场次；作答：有判分结果的客观题；待巩固错题：错题本未消灭条目；记忆卡：FSRS 卡片（错题和单词）；已学词：已建立记忆卡的单词。最近活跃取最近开考或作答时间。</p>
+          <p>删除用户会级联清理其全部个人数据，题库与试卷等公共数据不受影响。</p>
+        </details>
       </n-tab-pane>
 
       <!-- LLM 配置 -->
@@ -244,39 +279,79 @@ onMounted(load)
         </div>
       </n-tab-pane>
     </n-tabs>
+
+    <n-modal :show="resetModalOpen" preset="card" title="重置密码" class="reset-modal"
+      style="width: min(440px, calc(100vw - 32px)); border-radius: 8px"
+      :mask-closable="!resetSaving" :close-on-esc="!resetSaving" :closable="!resetSaving"
+      @update:show="value => { if (!value) closeResetModal() }">
+      <p class="reset-warning">确认重置用户「{{ resetUser?.username }}」的密码？保存后，该用户当前登录将失效。</p>
+      <n-form @submit.prevent="submitResetPassword">
+        <n-form-item label="新密码（4 至 64 位）" :show-feedback="false">
+          <n-input v-model:value="resetForm.password" type="password" show-password-on="click"
+            autocomplete="new-password" :disabled="resetSaving" :maxlength="64" placeholder="输入新密码" />
+        </n-form-item>
+        <n-form-item label="确认新密码" :show-feedback="false" style="margin-top: 16px">
+          <n-input v-model:value="resetForm.confirmPassword" type="password" show-password-on="click"
+            autocomplete="new-password" :disabled="resetSaving" :maxlength="64" placeholder="再次输入新密码" />
+        </n-form-item>
+        <p v-if="resetError" role="alert" class="reset-error">{{ resetError }}</p>
+        <div class="reset-actions">
+          <n-button :disabled="resetSaving" @click="closeResetModal">取消</n-button>
+          <n-button type="primary" attr-type="submit" :loading="resetSaving" :disabled="resetSaving">确认重置</n-button>
+        </div>
+      </n-form>
+    </n-modal>
   </div>
 </template>
 
 <style scoped>
-.tbl { display: grid; grid-template-columns: 1.3fr 1.2fr .5fr .6fr .7fr .7fr .7fr .7fr 1.2fr 1.3fr;
-  gap: 6px; align-items: center; font-size: 13px; padding: 7px 4px; }
+.page { font-size: 14px; }
+.user-table { border-radius: 8px; }
+.user-cards { display: none; }
+.tbl { display: grid; grid-template-columns: minmax(88px, 1.3fr) 90px repeat(6, minmax(48px, .7fr)) 90px 92px;
+  gap: 8px; align-items: center; font-size: 14px; padding: 10px 0; }
+.tbl > span { min-width: 0; overflow-wrap: anywhere; }
 .tbl.head { color: var(--t3); font-size: 12px; border-bottom: 1px solid var(--line); }
-.tbl.row { border-bottom: 1px dashed var(--line-soft); }
+.tbl.row { border-bottom: 1px solid var(--line-soft); }
 .tbl.row:last-child { border-bottom: none; }
-.ops { display: flex; gap: 6px; }
+.time-cell { display: flex; flex-direction: column; font-size: 12px; font-variant-numeric: tabular-nums; }
+.ops { display: flex; flex-direction: column; gap: 6px; }
+.page :deep(.n-button) { min-height: 44px; font-size: 14px; }
 .form-row { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
 .form-row label { font-size: 13px; color: var(--t2); font-weight: 600; }
-.test-result { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; }
+.test-result { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
 .test-result.ok { background: rgba(24,160,88,.08); color: var(--ok); }
 .test-result.bad { background: rgba(208,48,80,.07); color: var(--bad); }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-.stat-card { border-radius: 12px; text-align: center; }
-.sc-label { font-size: 12.5px; color: var(--t3); }
+.stat-card { border-radius: 8px; text-align: center; }
+.sc-label { font-size: 13px; color: var(--t3); }
 .sc-value { font-size: 26px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.admin-note { margin-top: 8px; font-size: 14px; line-height: 1.7; }
+summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+summary::before { content: '+'; }
+details[open] > summary::before { content: '−'; }
+.reset-warning { margin: 0 0 16px; font-size: 14px; overflow-wrap: anywhere; }
+.reset-error { color: var(--bad); font-size: 14px; }
+.reset-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.reset-actions :deep(.n-button) { min-height: 44px; }
+@media (min-width: 769px) and (max-width: 1100px) {
+  .user-table { overflow-x: auto; }
+  .tbl { min-width: 860px; }
+}
 @media (max-width: 768px) {
-  .admin-note { display: none; }
+  .user-table { display: none; }
   .user-cards { display: flex; flex-direction: column; gap: 10px; }
-  .tbl { display: none; }
-  .ucard { padding: 12px 14px; border-radius: var(--r-card); }
-  .uc-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-  .uc-head b { font-size: 15px; }
-  .uc-stats { display: flex; gap: 0; margin-bottom: 10px; }
-  .ucs { flex: 1; text-align: center; }
-  .ucs b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
-  .ucs span { font-size: 10px; color: var(--t3); }
-  .uc-foot { display: flex; align-items: center; gap: 8px; }
-  .uc-foot span { flex: 1; font-size: 11px; }
-  .tbl { grid-template-columns: repeat(2, 1fr); font-size: 12.5px; }
-  .tbl.head { display: none; }
+  .ucard { padding: 14px; border-radius: 8px; }
+  .uc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
+  .uc-head b { font-size: 16px; overflow-wrap: anywhere; min-width: 0; }
+  .uc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; margin-bottom: 14px; }
+  .ucs { min-width: 0; text-align: center; }
+  .ucs b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .ucs span { font-size: 12px; color: var(--t3); }
+  .uc-foot { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+  .uc-foot > span { font-size: 12px; }
+  .user-details p { font-size: 14px; margin: 0 0 10px; }
+  .uc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>
