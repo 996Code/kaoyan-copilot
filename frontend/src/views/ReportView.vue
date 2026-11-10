@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NCard, NSpin, NTag, useDialog } from 'naive-ui'
 import { api } from '../api'
@@ -26,6 +26,18 @@ function analysisOpen(id) {
   return v === undefined ? isDesktop : v
 }
 const gradeResults = reactive({}) // qid -> {loading, data, error}
+const idx = ref(0)
+const showNav = ref(false)
+const currentItem = computed(() => filtered.value[idx.value] || null)
+
+watch(filter, () => { idx.value = 0 })
+
+function goto(i) {
+  if (i < 0 || i >= filtered.value.length) return
+  idx.value = i
+  showNav.value = false
+  window.scrollTo({ top: 0 })
+}
 
 async function doGrade(q) {
   if (gradeResults[q.id]?.loading) return
@@ -184,78 +196,96 @@ const counts = computed(() => {
         <n-button size="small" :type="filter === 'all' ? 'primary' : 'default'" @click="filter = 'all'">全部</n-button>
       </div>
 
-      <div v-for="(it, i) in filtered" :key="it.q.id" class="review-card">
+      <!-- 导航条 + 答题卡开关 -->
+      <div v-if="filtered.length" class="nav-bar panel" style="margin-bottom:12px">
+        <n-button quaternary size="small" :disabled="idx === 0" @click="goto(idx - 1)">‹ 上一题</n-button>
+        <span class="nav-pos">{{ idx + 1 }} / {{ filtered.length }}</span>
+        <n-button size="small" @click="showNav = !showNav">答题卡</n-button>
+        <n-button quaternary size="small" :disabled="idx >= filtered.length - 1" @click="goto(idx + 1)">下一题 ›</n-button>
+      </div>
+
+      <!-- 答题卡面板 -->
+      <div v-if="showNav" class="nav-grid panel" style="margin-bottom:12px;padding:12px 14px">
+        <div class="anscard">
+          <div v-for="(it, i) in filtered" :key="currentItem.q.id" class="cell"
+            :class="{ answered: results[String(currentItem.q.id)]?.is_correct === true, current: i === idx }"
+            @click="goto(i)">{{ currentItem.q.number || i + 1 }}</div>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:8px">深色＝答对 · 橙框＝当前</div>
+      </div>
+
+      <div v-if="currentItem" :key="currentItem.q.id" class="review-card">
         <div class="rc-head">
-          <n-tag :type="results[String(it.q.id)]?.is_correct === true ? 'success'
-            : results[String(it.q.id)]?.is_correct === false ? 'error' : 'info'" size="small">
-            {{ results[String(it.q.id)]?.is_correct === true ? '答对'
-              : results[String(it.q.id)]?.is_correct === false ? '答错' : '主观题' }}
+          <n-tag :type="results[String(currentItem.q.id)]?.is_correct === true ? 'success'
+            : results[String(currentItem.q.id)]?.is_correct === false ? 'error' : 'info'" size="small">
+            {{ results[String(currentItem.q.id)]?.is_correct === true ? '答对'
+              : results[String(currentItem.q.id)]?.is_correct === false ? '答错' : '主观题' }}
           </n-tag>
-          <n-tag v-if="it.q.disputed" type="warning" size="small">该题答案存在版本争议</n-tag>
+          <n-tag v-if="currentItem.q.disputed" type="warning" size="small">该题答案存在版本争议</n-tag>
           <span class="muted" style="font-size:12px">
-            第 {{ it.q.number }} 题 · {{ sections[it.sectionIndex]?.name }} · 得分
-            {{ results[String(it.q.id)]?.score_earned ?? '—' }}/{{ it.q.score ?? '—' }}
+            第 {{ currentItem.q.number }} 题 · {{ sections[it.sectionIndex]?.name }} · 得分
+            {{ results[String(currentItem.q.id)]?.score_earned ?? '—' }}/{{ currentItem.q.score ?? '—' }}
           </span>
         </div>
 
-        <GroupMaterial v-if="it.group" :group="it.group" />
+        <GroupMaterial v-if="currentItem.group" :group="currentItem.group" />
 
-        <QuestionItem :q="it.q" :model-value="answers[String(it.q.id)]" mode="review"
-          :result="{ your_answer: results[String(it.q.id)]?.your_answer, correct_answer: it.q.answer }"
-          :shared-options="it.group?.options" />
+        <QuestionItem :q="it.q" :model-value="answers[String(currentItem.q.id)]" mode="review"
+          :result="{ your_answer: results[String(currentItem.q.id)]?.your_answer, correct_answer: currentItem.q.answer }"
+          :shared-options="currentItem.group?.options" />
 
         <div class="verdict">
-          <div v-if="it.q.qtype === 'single_choice'">
-            你的答案：<b :class="results[String(it.q.id)]?.is_correct ? 'ok' : 'bad'">
-              {{ results[String(it.q.id)]?.your_answer || '未作答' }}</b>
-            <span style="margin-left:14px">正确答案：<b class="ok">{{ it.q.answer }}</b></span>
+          <div v-if="currentItem.q.qtype === 'single_choice'">
+            你的答案：<b :class="results[String(currentItem.q.id)]?.is_correct ? 'ok' : 'bad'">
+              {{ results[String(currentItem.q.id)]?.your_answer || '未作答' }}</b>
+            <span style="margin-left:14px">正确答案：<b class="ok">{{ currentItem.q.answer }}</b></span>
           </div>
           <div v-else>
             <div class="section-title">参考答案</div>
-            <div class="rich" v-html="renderRich(it.q.answer)"></div>
+            <div class="rich" v-html="renderRich(currentItem.q.answer)"></div>
           </div>
         </div>
 
-        <div v-if="it.q.analysis" class="analysis">
+        <div v-if="currentItem.q.analysis" class="analysis">
           <div class="section-title toggle"
-            @click="openAnalysis[it.q.id] = !analysisOpen(it.q.id)">
-            {{ analysisOpen(it.q.id) ? '▾ 收起解析' : '▸ 显示解析' }}
+            @click="openAnalysis[currentItem.q.id] = !analysisOpen(currentItem.q.id)">
+            {{ analysisOpen(currentItem.q.id) ? '▾ 收起解析' : '▸ 显示解析' }}
           </div>
-          <div v-show="analysisOpen(it.q.id)" class="rich" v-html="renderRich(it.q.analysis)"></div>
+          <div v-show="analysisOpen(currentItem.q.id)" class="rich" v-html="renderRich(currentItem.q.analysis)"></div>
         </div>
 
         <!-- 错题：AI 讲解 -->
-        <AiPanel v-if="results[String(it.q.id)]?.is_correct === false"
-          :endpoint="`/api/ai/explain/${it.q.id}?student_answer=${encodeURIComponent(results[String(it.q.id)]?.your_answer || '')}`" />
+        <AiPanel v-if="results[String(currentItem.q.id)]?.is_correct === false"
+          :endpoint="`/api/ai/explain/${currentItem.q.id}?student_answer=${encodeURIComponent(results[String(currentItem.q.id)]?.your_answer || '')}`" />
 
         <!-- 主观题：AI 批改 -->
-        <div v-if="it.q.qtype !== 'single_choice'" class="ai-grade">
+        <div v-if="currentItem.q.qtype !== 'single_choice'" class="ai-grade">
           <n-button size="small" type="warning" ghost
-            :loading="gradeResults[it.q.id]?.loading" @click="doGrade(it.q)">
+            :loading="gradeResults[currentItem.q.id]?.loading" @click="doGrade(it.q)">
             AI 批改本题
           </n-button>
-          <template v-if="gradeResults[it.q.id]?.data">
+          <template v-if="gradeResults[currentItem.q.id]?.data">
             <div class="grade-card">
               <div class="grade-score">
-                AI 评分：<b>{{ gradeResults[it.q.id].data.score }}</b> / {{ gradeResults[it.q.id].data.max_score }}
+                AI 评分：<b>{{ gradeResults[currentItem.q.id].data.score }}</b> / {{ gradeResults[currentItem.q.id].data.max_score }}
               </div>
               <div class="grade-dims">
-                <div v-for="(d, di) in gradeResults[it.q.id].data.dimensions" :key="di" class="dim-row">
+                <div v-for="(d, di) in gradeResults[currentItem.q.id].data.dimensions" :key="di" class="dim-row">
                   <span class="dim-name">{{ d.name }}</span>
                   <span class="dim-score">{{ d.score }}/{{ d.max }}</span>
                   <span class="muted dim-comment">{{ d.comment }}</span>
                 </div>
               </div>
-              <div v-if="gradeResults[it.q.id].data.suggestions?.length" class="grade-sug">
+              <div v-if="gradeResults[currentItem.q.id].data.suggestions?.length" class="grade-sug">
                 <div class="section-title">改进建议</div>
                 <ul>
-                  <li v-for="(s, si) in gradeResults[it.q.id].data.suggestions" :key="si">{{ s }}</li>
+                  <li v-for="(s, si) in gradeResults[currentItem.q.id].data.suggestions" :key="si">{{ s }}</li>
                 </ul>
               </div>
             </div>
           </template>
-          <div v-else-if="gradeResults[it.q.id]?.error" class="muted" style="font-size:13px; margin-top:6px">
-            {{ gradeResults[it.q.id].error }}
+          <div v-else-if="gradeResults[currentItem.q.id]?.error" class="muted" style="font-size:13px; margin-top:6px">
+            {{ gradeResults[currentItem.q.id].error }}
           </div>
         </div>
       </div>
@@ -281,6 +311,8 @@ const counts = computed(() => {
 .verdict { margin-top: 10px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }
 .analysis { margin-top: 10px; }
+.nav-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; gap:8px; }
+.nav-pos { font-size:13.5px; color:var(--t2); font-variant-numeric:tabular-nums; }
 .toggle { cursor: pointer; user-select: none; }
 .ai-grade { margin-top: 10px; }
 .grade-card { margin-top: 8px; border: 1px solid rgba(240,160,32,.35); background: rgba(240,160,32,.06); border-radius: 10px; padding: 12px 14px; }

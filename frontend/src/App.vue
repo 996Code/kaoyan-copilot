@@ -59,6 +59,7 @@ const moreItems = computed(() => {
     { to: '/knowledge', icon: 'ai', label: '知识卡片' },
     { to: '/writing', icon: 'vocab', label: '写作模板' },
     { to: '/papers', icon: 'exam', label: '真题模考（管综/英二）' },
+    { to: '/history', icon: 'check', label: '模考记录' },
   ]
   if (isAdmin.value) items.push({ to: '/admin', icon: 'ai', label: '系统管理' })
   return items
@@ -101,6 +102,7 @@ function goMore(to) {
                 <router-link to="/wrongbook">错题本</router-link>
                 <router-link to="/writing">写作模板</router-link>
                 <router-link to="/papers">真题模考</router-link>
+                <router-link to="/history">模考记录</router-link>
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">

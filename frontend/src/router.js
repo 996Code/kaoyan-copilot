@@ -10,6 +10,7 @@ import WrongbookView from './views/WrongbookView.vue'
 import ReviewView from './views/ReviewView.vue'
 import VocabView from './views/VocabView.vue'
 import AdminView from './views/AdminView.vue'
+import HistoryView from './views/HistoryView.vue'
 import KnowledgeView from './views/KnowledgeView.vue'
 import WritingView from './views/WritingView.vue'
 
@@ -27,6 +28,7 @@ export const router = createRouter({
     { path: '/review', component: ReviewView },
     { path: '/vocab', component: VocabView },
     { path: '/admin', component: AdminView },
+    { path: '/history', component: HistoryView },
     { path: '/knowledge', component: KnowledgeView },
     { path: '/writing', component: WritingView },
   ],
