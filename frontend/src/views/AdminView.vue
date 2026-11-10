@@ -169,7 +169,33 @@ onMounted(load)
             </span>
           </div>
         </n-card>
-        <p class="muted" style="font-size:12.5px; margin-top:8px">
+
+        <!-- 移动端：卡片式用户列表 -->
+        <div class="user-cards">
+          <div v-for="u in users" :key="u.id" class="ucard panel">
+            <div class="uc-head">
+              <b>{{ u.username }}</b>
+              <n-tag v-if="u.is_admin" type="info" size="tiny">管理员</n-tag>
+            </div>
+            <div class="uc-stats">
+              <div class="ucs"><b>{{ u.exams }}</b><span>模考</span></div>
+              <div class="ucs"><b>{{ u.answers }}</b><span>作答</span></div>
+              <div class="ucs" :style="u.accuracy != null && u.accuracy < 60 ? 'color:var(--bad)' : ''">
+                <b>{{ u.accuracy ?? '—' }}%</b><span>正确率</span>
+              </div>
+              <div class="ucs"><b>{{ u.wrong_active }}</b><span>错题</span></div>
+              <div class="ucs"><b>{{ u.cards }}</b><span>记忆卡</span></div>
+              <div class="ucs"><b>{{ u.words_learned }}</b><span>已学词</span></div>
+            </div>
+            <div class="uc-foot">
+              <span class="muted">活跃 {{ fmt(u.last_active) }}</span>
+              <n-button size="small" @click="resetPassword(u)">重置密码</n-button>
+              <n-button size="small" type="error" ghost :disabled="u.is_admin" @click="removeUser(u)">删除</n-button>
+            </div>
+          </div>
+        </div>
+
+        <p class="muted admin-note" style="font-size:12.5px; margin-top:8px">
           数据口径：模考=已交卷场次；作答=有判分结果的客观题；待巩固=错题本未消灭条目；记忆卡=FSRS 卡片（错题+单词）。
           删除用户会级联清理其全部个人数据，题库与试卷等公共数据不受影响。
         </p>
@@ -239,6 +265,17 @@ onMounted(load)
 .sc-value { font-size: 26px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
 @media (max-width: 768px) {
   .admin-note { display: none; }
+  .user-cards { display: flex; flex-direction: column; gap: 10px; }
+  .tbl { display: none; }
+  .ucard { padding: 12px 14px; border-radius: var(--r-card); }
+  .uc-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+  .uc-head b { font-size: 15px; }
+  .uc-stats { display: flex; gap: 0; margin-bottom: 10px; }
+  .ucs { flex: 1; text-align: center; }
+  .ucs b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .ucs span { font-size: 10px; color: var(--t3); }
+  .uc-foot { display: flex; align-items: center; gap: 8px; }
+  .uc-foot span { flex: 1; font-size: 11px; }
   .tbl { grid-template-columns: repeat(2, 1fr); font-size: 12.5px; }
   .tbl.head { display: none; }
 }
