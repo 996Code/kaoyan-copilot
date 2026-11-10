@@ -139,7 +139,10 @@ const counts = computed(() => {
     <template v-else-if="paper">
       <div class="report-head">
         <div>
-          <h2 style="margin:0 0 4px">{{ paper.name }} · 成绩单</h2>
+          <h2 style="margin:0 0 4px">
+            <span class="rp-full">{{ paper.name }} · 成绩单</span>
+            <span class="rp-short">{{ paper.year }} {{ paper.subject_code === 'gz199' ? '管综' : '英二' }} · 成绩单</span>
+          </h2>
           <span class="muted">用时 {{ duration }}
             <n-tag v-if="exam.overtime" type="error" size="small" style="margin-left:8px">超时交卷</n-tag>
           </span>
@@ -311,6 +314,14 @@ const counts = computed(() => {
 .verdict { margin-top: 10px; padding: 8px 12px; background: rgba(128,128,128,.05); border-radius: 8px; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }
 .analysis { margin-top: 10px; }
+.rp-short { display: none; }
+@media (max-width: 768px) {
+  .rp-full { display: none; }
+  .rp-short { display: inline; }
+  .report-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .report-head > div:last-child { width: 100%; display: flex; gap: 8px; }
+  .report-head h2 { font-size: 18px; }
+}
 .nav-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; gap:8px; }
 .nav-pos { font-size:13.5px; color:var(--t2); font-variant-numeric:tabular-nums; }
 .toggle { cursor: pointer; user-select: none; }

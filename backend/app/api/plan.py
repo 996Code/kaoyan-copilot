@@ -232,7 +232,91 @@ def today(user: User = Depends(current_user), session: Session = Depends(get_ses
         "mock_suggestion": mock,
         "recent_accuracy": recent_accuracy,
         "exams_today": exams_today,
+        # 学习打卡：今天有作答 + 连续天数
+        "streak": _study_streak(session, user.id),
     }
+
+
+def _study_streak(session, user_id: int) -> dict:
+    """学习打卡：今天是否已作答 + 连续学习天数。"""
+    from datetime import timedelta
+
+    all_dates = set(
+        r.strftime("%Y-%m-%d")
+        for r in session.scalars(
+            select(AnswerRecord.created_at).where(AnswerRecord.user_id == user_id)
+        ).all()
+    )
+    today_str = datetime.now().astimezone().strftime("%Y-%m-%d")
+    studied_today = today_str in all_dates
+    # 从今天（或昨天）往前数连续天数
+    streak = 0
+    check = datetime.now().astimezone()
+    if not studied_today:
+        check -= timedelta(days=1)
+    while check.strftime("%Y-%m-%d") in all_dates:
+        streak += 1
+        check -= timedelta(days=1)
+    return {"studied_today": studied_today, "streak_days": streak}
+
+
+@router.get("/calendar")
+def calendar(user=Depends(current_user), session: Session = Depends(get_session)):
+    """40 天冲刺日历：考试日倒排的学习阶段 + 每日完成情况。"""
+    from datetime import date as DateType, timedelta
+
+    exam_date = DateType.fromisoformat(settings.exam_date)
+    today = datetime.now().astimezone().date()
+    days_left = (exam_date - today).days
+
+    # 已学日期（有作答记录）
+    studied_dates = set(
+        r.strftime("%Y-%m-%d")
+        for r in session.scalars(
+            select(AnswerRecord.created_at).where(AnswerRecord.user_id == user.id)
+        ).all()
+    )
+    # 已模考日期
+    exam_dates = set(
+        r.strftime("%Y-%m-%d")
+        for r in session.scalars(
+            select(ExamRecord.created_at).where(
+                ExamRecord.user_id == user.id, ExamRecord.status == "submitted"
+            )
+        ).all()
+    )
+
+    # 学习阶段（距考试）
+    phases = [
+        (25, "冲刺期", "刷真题+错题重做"),
+        (12, "真题模考期", "隔天一套限时模考+复盘"),
+        (5, "考前调整期", "只看错题+知识卡，不做新题"),
+        (0, "考试周", "背模板+调整作息"),
+    ]
+
+    days = []
+    for i in range(min(42, days_left + 1)):
+        d = today + timedelta(days=i)
+        d_str = d.strftime("%Y-%m-%d")
+        phase = next((p[1] for p in phases if days_left - i > p[0] and p[0] > 0 or (days_left - i <= p[0] and p[0] == 0)), phases[0][1])
+        # 简化阶段计算
+        dl = days_left - i
+        if dl > 25: phase_name = "基础冲刺"
+        elif dl > 12: phase_name = "真题模考"
+        elif dl > 5: phase_name = "考前调整"
+        else: phase_name = "考试周"
+        days.append({
+            "date": d_str,
+            "days_to_exam": dl,
+            "is_today": d == today,
+            "is_past": d < today,
+            "is_exam_day": dl == 0,
+            "studied": d_str in studied_dates,
+            "exam_taken": d_str in exam_dates,
+            "phase": phase_name,
+        })
+
+    return {"exam_date": settings.exam_date, "days_left": days_left, "days": days}
 
 
 @router.get("/trends")
