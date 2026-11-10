@@ -252,6 +252,11 @@ onBeforeUnmount(() => {
         <div class="verdict muted">
           我答：<b class="bad">{{ item.last_answer ?? '未答' }}</b>
           <span style="margin-left:12px">正确：<b class="ok">{{ item.question.answer }}</b></span>
+          <!-- 知识卡↔题目打通：错题直达对应知识卡分类 -->
+          <button type="button" class="kp-link"
+            @click="$router.push(`/knowledge?subject=${subject}&module=${item.module.code}`)">
+            相关知识卡 ›
+          </button>
         </div>
 
         <div v-if="item.question.analysis" class="analysis">
@@ -285,7 +290,9 @@ onBeforeUnmount(() => {
 .wb-card { padding: 16px 18px; margin-bottom: 14px; }
 .wb-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .meta-text { font-size: 12.5px; }
-.verdict { margin-top: 8px; font-size: 14px; padding: 8px 12px; background: var(--line-soft); border-radius: 8px; }
+.verdict { margin-top: 8px; font-size: 14px; padding: 8px 12px; background: var(--line-soft); border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+.kp-link { border: none; background: none; cursor: pointer; margin-left: auto; padding: 6px 4px 6px 12px; font-size: 13px; color: var(--blue); min-height: 36px; }
+.kp-link:hover { text-decoration: underline; }
 .ok { color: var(--ok); } .bad { color: var(--bad); }
 .toggle { cursor: pointer; user-select: none; }
 .anscard .cell { width:44px; height:44px; flex-shrink:0; font-family:inherit; }

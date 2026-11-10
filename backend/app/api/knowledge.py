@@ -45,18 +45,16 @@ def overview(user: User = Depends(current_user), session: Session = Depends(get_
             )
         ).all()
     )
+    # 一次拉全量卡片 id 按分类分组，替代逐分类循环查询（N+1）
+    ids_by_cat: dict = {}
+    for cid, sub, mod, cat in session.execute(
+        select(KnowledgeCard.id, KnowledgeCard.subject_code, KnowledgeCard.module_name, KnowledgeCard.category)
+    ).all():
+        ids_by_cat.setdefault((sub, mod, cat), []).append(cid)
 
     out = []
     for sub, mod, cat, total in rows:
-        ids = [
-            c.id for c in session.scalars(
-                select(KnowledgeCard).where(
-                    KnowledgeCard.subject_code == sub,
-                    KnowledgeCard.module_name == mod,
-                    KnowledgeCard.category == cat,
-                )
-            ).all()
-        ]
+        ids = ids_by_cat.get((sub, mod, cat), [])
         n_learned = len(learned_ids & set(ids))
         n_due = len(due_ids & set(ids))
         out.append({

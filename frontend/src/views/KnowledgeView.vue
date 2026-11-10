@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { NButton, NCard, NEmpty, NProgress, NSpin, useMessage } from 'naive-ui'
 import { api } from '../api'
 import { renderRich } from '../markdown'
@@ -7,6 +8,8 @@ import AppIcon from '../components/AppIcon.vue'
 import WritingView from './WritingView.vue'
 
 const message = useMessage()
+const route = useRoute()
+const router = useRouter()
 const loading = ref(true)
 // 页内页签：知识卡片 / 写作模板，支持 /knowledge?tab=writing 深链
 const pageTab = ref('cards')
@@ -46,6 +49,16 @@ async function loadOverview() {
   active.value = null
   try {
     groups.value = await api('/api/knowledge/overview')
+    // 知识卡↔题目打通：支持 /knowledge?subject=gz199&module=math 深链（错题本等入口跳入）
+    const qs = route.query
+    if (qs.subject && qs.module) {
+      const g = matchGroup(String(qs.subject), String(qs.module))
+      if (g) {
+        loading.value = false
+        await openCategory(g)
+        return
+      }
+    }
   } catch (e) {
     if (e.status === 401) return
     loadError.value = e.message
@@ -54,6 +67,36 @@ async function loadOverview() {
     loading.value = false
   }
 }
+
+/* 练习模块 code → 知识卡分组（管综按 module_name；英二全部挂在「英语写作」下按 category 细分） */
+function matchGroup(subjectCode, moduleCode) {
+  if (['cloze', 'reading', 'translation'].includes(moduleCode)) {
+    const cat = { cloze: '完形', reading: '阅读', translation: '翻译' }[moduleCode]
+    return groups.value.find(
+      (g) => g.subject_code === subjectCode && g.module_name === '英语写作' && g.category === cat
+    ) || null
+  }
+  const name = moduleCode === 'math' ? '数学'
+    : moduleCode === 'logic' ? '逻辑推理'
+    : moduleCode === 'writing' ? (subjectCode === 'gz199' ? '写作' : '英语写作')
+    : null
+  if (!name) return null
+  return groups.value.find((g) => g.subject_code === subjectCode && g.module_name === name) || null
+}
+
+/* 当前分类 → 对应练习入口（管综按模块、英二按分类细化；词汇卡去背单词） */
+const practiceLink = computed(() => {
+  const g = active.value
+  if (!g) return null
+  if (g.subject_code === 'gz199') {
+    const code = g.module_name === '数学' ? 'math' : g.module_name === '逻辑推理' ? 'logic' : 'writing'
+    return { to: { path: '/practice', query: { subject: 'gz199', module: code } }, label: '练相关真题' }
+  }
+  const catMap = { 完形: 'cloze', 阅读: 'reading', 翻译: 'translation' }
+  if (catMap[g.category]) return { to: { path: '/practice', query: { subject: 'en2', module: catMap[g.category] } }, label: '练相关真题' }
+  if (g.category === '词汇') return { to: { path: '/vocab' }, label: '去背单词' }
+  return { to: { path: '/practice', query: { subject: 'en2', module: 'writing' } }, label: '练相关真题' }
+})
 
 async function openCategory(g) {
   if (loading.value || ratingBusy.value) return
@@ -194,6 +237,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             <n-button size="large" :loading="ratingBusy" @click="rate(2)">模糊 <span class="kbd-hint">(2)</span></n-button>
             <n-button size="large" type="success" ghost :loading="ratingBusy" @click="rate(3)">记住了 <span class="kbd-hint">(3)</span></n-button>
           </div>
+          <!-- 知识卡↔题目打通：学完即练对应模块真题 -->
+          <div v-if="practiceLink" class="kpractice">
+            <n-button quaternary size="small" @click="router.push(practiceLink.to)">
+              {{ practiceLink.label }} ›
+            </n-button>
+          </div>
         </div>
       </div>
 
@@ -231,6 +280,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .kfront { text-align:center; padding:18px 0 26px; }
 .ktitle { font-size:26px; font-weight:800; overflow-wrap:anywhere; }
 .kback .rich { font-size:15.5px; line-height:1.9; }
+.kpractice { margin-top: 12px; text-align: center; }
+.kpractice .n-button { min-height: 36px; }
 .krate { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; max-width:480px; margin:22px auto 0; }
 .krate .n-button { min-width:0; min-height:44px; padding:0 8px; }
 .error-state { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; }

@@ -28,17 +28,21 @@ def record_wrong(session: Session, user_id: int, question_id: int) -> None:
         item.last_wrong_at = datetime.now(timezone.utc)
 
 
-def _last_wrong_answer(session: Session, user_id: int, question_id: int):
-    return session.scalar(
+def _last_wrong_answers(session: Session, user_id: int, question_ids: list[int]) -> dict[int, AnswerRecord]:
+    """批量取每题最近一次错误作答（DISTINCT ON，一次查询替代逐题 N+1）。"""
+    if not question_ids:
+        return {}
+    rows = session.scalars(
         select(AnswerRecord)
+        .distinct(AnswerRecord.question_id)
         .where(
             AnswerRecord.user_id == user_id,
-            AnswerRecord.question_id == question_id,
+            AnswerRecord.question_id.in_(question_ids),
             AnswerRecord.is_correct.is_(False),
         )
-        .order_by(AnswerRecord.id.desc())
-        .limit(1)
-    )
+        .order_by(AnswerRecord.question_id, AnswerRecord.id.desc())
+    ).all()
+    return {r.question_id: r for r in rows}
 
 
 @router.get("")
@@ -61,9 +65,11 @@ def list_wrong(
     if module:
         stmt = stmt.where(Module.code == module)
 
+    rows = session.execute(stmt).all()
+    last_by_q = _last_wrong_answers(session, user.id, [q.id for _, q, _, _ in rows])
     out = []
-    for item, q, mod, _sub in session.execute(stmt).all():
-        last = _last_wrong_answer(session, user.id, q.id)
+    for item, q, mod, _sub in rows:
+        last = last_by_q.get(q.id)
         out.append(
             {
                 "question": {
