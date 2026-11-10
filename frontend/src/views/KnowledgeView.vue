@@ -4,9 +4,12 @@ import { NButton, NCard, NEmpty, NProgress, NSpin, useMessage } from 'naive-ui'
 import { api } from '../api'
 import { renderRich } from '../markdown'
 import AppIcon from '../components/AppIcon.vue'
+import WritingView from './WritingView.vue'
 
 const message = useMessage()
 const loading = ref(true)
+// 页内页签：知识卡片 / 写作模板，支持 /knowledge?tab=writing 深链
+const pageTab = ref('cards')
 const groups = ref([])
 const loadError = ref('')
 const failedCategory = ref(null)
@@ -123,7 +126,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <h1 class="page-h2">知识速成卡</h1>
         <span class="sub">公式 / 技法 / 谬误 / 句型，标记熟悉度即进 FSRS 复习队列</span>
       </div>
-      <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
+      <div class="page-seg" role="group" aria-label="知识板块">
+      <n-button size="small" :aria-pressed="pageTab === 'cards'" :type="pageTab === 'cards' ? 'primary' : 'default'" @click="pageTab = 'cards'">知识卡片</n-button>
+      <n-button size="small" :aria-pressed="pageTab === 'writing'" :type="pageTab === 'writing' ? 'primary' : 'default'" @click="pageTab = 'writing'">写作模板</n-button>
+    </div>
+
+    <WritingView v-if="pageTab === 'writing'" embedded />
+
+    <div v-else>
+    <div v-if="loading" style="display:flex;justify-content:center;padding:80px 0"><n-spin size="large" /></div>
       <div v-else-if="loadError" class="error-state" role="alert">{{ loadError }} <n-button @click="failedCategory ? openCategory(failedCategory) : loadOverview()">重试加载</n-button></div>
       <n-empty v-else-if="!groups.length" description="暂无知识卡" style="margin:60px 0" />
 
@@ -149,6 +160,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         </div>
       </div>
       </template>
+    </div>
     </template>
 
     <!-- 卡片流 -->
@@ -199,6 +211,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </template>
 
 <style scoped>
+.page-seg { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; padding:4px; border-radius:8px; background:var(--line-soft); margin:14px 0 12px; }
+.page-seg .n-button { min-height:44px; }
 .kb-head { display:flex; align-items:baseline; gap:12px; margin:6px 0 14px; }
 .kb-head h1 { font-size:20px; font-weight:700; margin:0; }
 .kb-head .sub { color:var(--t3); font-size:13px; }

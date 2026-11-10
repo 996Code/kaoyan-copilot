@@ -3,6 +3,9 @@ import { onMounted, ref } from 'vue'
 import { NButton, NCard, NEmpty, NSpin, NTag, useMessage } from 'naive-ui'
 import { api } from '../api'
 
+// embedded=true 时作为子页嵌入（如真题模考页的「模考记录」页签），不渲染外层页面壳
+const props = defineProps({ embedded: { type: Boolean, default: false } })
+
 const message = useMessage()
 const loading = ref(true)
 const records = ref([])
@@ -40,8 +43,8 @@ const submittedAt = (record) => record.submitted_at
 </script>
 
 <template>
-  <div class="page">
-    <div class="kb-head">
+  <div :class="embedded ? '' : 'page'">
+    <div v-if="!embedded" class="kb-head">
       <h1 class="page-h2">模考记录</h1>
     </div>
 

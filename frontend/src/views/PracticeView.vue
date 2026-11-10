@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   NButton, NCard, NSelect, NSpin, NTag, useMessage,
 } from 'naive-ui'
@@ -9,8 +10,19 @@ import { renderRich } from '../markdown'
 import QuestionItem from '../components/QuestionItem.vue'
 import GroupMaterial from '../components/GroupMaterial.vue'
 import AiPanel from '../components/AiPanel.vue'
+import PapersView from './PapersView.vue'
+import HistoryView from './HistoryView.vue'
 
 const message = useMessage()
+const route = useRoute()
+
+/* 「练习」归纳做题三入口：专项抽题 / 真题整卷 / 模考记录 */
+const TABS = [
+  { key: 'special', label: '专项练习' },
+  { key: 'papers', label: '真题模考' },
+  { key: 'record', label: '模考记录' },
+]
+const pageTab = ref(['papers', 'record'].includes(route.query.tab) ? route.query.tab : 'special')
 
 const subjects = ref([])
 const subject = ref('gz199')
@@ -210,7 +222,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <div class="page">
-    <h2 class="page-h2" style="margin:18px 0 4px">专项练习</h2>
+    <!-- 页签：专项练习 / 真题模考 / 模考记录（做题三入口归纳于一页） -->
+    <div class="page-seg" role="group" aria-label="练习板块">
+      <n-button v-for="t in TABS" :key="t.key" size="small" :aria-pressed="pageTab === t.key"
+        :type="pageTab === t.key ? 'primary' : 'default'" @click="pageTab = t.key">{{ t.label }}</n-button>
+    </div>
+
+    <!-- 真题模考 / 模考记录：整块复用对应页面 -->
+    <PapersView v-if="pageTab === 'papers'" embedded />
+    <HistoryView v-else-if="pageTab === 'record'" embedded />
+
+    <template v-else>
+    <h2 class="page-h2" style="margin:2px 0 4px">专项练习</h2>
     <p class="muted pf-sub" style="margin:0 0 14px">按模块/年份抽题，即答即判，错题自动进错题记录</p>
 
     <n-card :bordered="false" style="border-radius:14px; margin-bottom:16px">
@@ -286,10 +309,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         </div>
       </div>
     </template>
+    </template>
   </div>
 </template>
 
 <style scoped>
+.page-seg { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:4px; border-radius:8px; background:var(--line-soft); margin:14px 0 12px; }
+.page-seg .n-button { min-height:44px; }
 .filters { display:grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, .8fr) auto; gap:10px; align-items:end; }
 .filter-field { display:grid; gap:6px; min-width:0; font-size:12px; color:var(--t2); }
 .filter-field :deep(.n-base-selection) { min-height:44px; }

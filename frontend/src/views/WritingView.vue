@@ -1,4 +1,5 @@
 <script setup>
+const props = defineProps({ embedded: { type: Boolean, default: false } })
 import { ref } from 'vue'
 import { NSelect, NTabs, NTab } from 'naive-ui'
 import { renderRich } from '../markdown'
@@ -125,8 +126,8 @@ const tabOptions = Object.entries(SECTIONS).map(([k, v]) => ({ label: `${v.name}
 </script>
 
 <template>
-  <div class="page">
-    <div class="kb-head">
+  <div :class="embedded ? '' : 'page'">
+    <div v-if="!embedded" class="kb-head">
       <h1 class="page-h2">写作模板库</h1>
       <span class="sub">管综两篇 + 英二两篇：框架 · 句式 · 素材（配合「AI 批改」使用：看模板 → 练真题 → AI 评分）</span>
     </div>

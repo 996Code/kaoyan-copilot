@@ -22,7 +22,7 @@ const daysLeft = computed(() => {
 const inExam = computed(() => route.path.startsWith('/exam/'))
 const isLogin = computed(() => route.path === '/login')
 const PAGE_TITLES = [
-  ['/review', '复习中心'], ['/vocab', '背单词'], ['/practice', '专项练习'],
+  ['/review', '复习中心'], ['/vocab', '背单词'], ['/practice', '练习'],
   ['/wrongbook', '错题本'], ['/knowledge', '知识卡片'], ['/writing', '写作模板'],
   ['/admin', '系统管理'], ['/papers', '真题模考'],
   ['/history', '模考记录'], ['/report', '成绩报告'],
@@ -49,26 +49,20 @@ function logout() {
   clearToken()
   localStorage.removeItem('kaoyan_username')
   localStorage.removeItem('kaoyan_is_admin')
+  avatarMenuOpen.value = false
   router.push('/login')
 }
 
-/* 移动端「更多」菜单 */
-const moreOpen = ref(false)
-const moreActive = computed(() => ['/papers', '/history', '/report', '/admin', '/knowledge', '/writing'].some(p => route.path.startsWith(p)))
-const moreItems = computed(() => {
-  const items = [
-    { to: '/knowledge', icon: 'ai', label: '知识卡片' },
-    { to: '/writing', icon: 'vocab', label: '写作模板' },
-    { to: '/papers', icon: 'exam', label: '真题模考（管综/英二）' },
-    { to: '/history', icon: 'check', label: '模考记录' },
-  ]
-  if (isAdmin.value) items.push({ to: '/admin', icon: 'ai', label: '系统管理' })
-  return items
+/* 右上角头像下拉菜单（系统管理 / 退出登录）：点空白处收起 */
+const avatarMenuOpen = ref(false)
+onMounted(() => {
+  document.addEventListener('click', () => { avatarMenuOpen.value = false })
 })
-function goMore(to) {
-  moreOpen.value = false
-  router.push(to)
+function goAvatarAdmin() {
+  avatarMenuOpen.value = false
+  router.push('/admin')
 }
+
 </script>
 
 <template>
@@ -98,21 +92,30 @@ function goMore(to) {
                 <router-link to="/">首页</router-link>
                 <router-link to="/review">复习</router-link>
                 <router-link to="/vocab">背单词</router-link>
-                <router-link to="/knowledge">知识卡片</router-link>
-                <router-link to="/practice">专项练习</router-link>
-                <router-link to="/wrongbook">错题本</router-link>
-                <router-link to="/writing">写作模板</router-link>
+                <router-link to="/practice">练习</router-link>
                 <router-link to="/papers">真题模考</router-link>
-                <router-link to="/history">模考记录</router-link>
+                <router-link to="/wrongbook">错题本</router-link>
+                <router-link to="/knowledge">知识</router-link>
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">
                 <div v-if="daysLeft" class="exam-chip">距初试 <b>{{ daysLeft }}</b> 天</div>
-                <div v-if="isLoggedIn && username" class="username">
-                  <span class="avatar">{{ username[0].toUpperCase() }}</span>
-                  <span class="u-name">{{ username }}</span>
+                <div v-if="isLoggedIn && username" class="username avatar-wrap">
+                  <button class="avatar-btn" :aria-expanded="avatarMenuOpen" aria-label="账号菜单"
+                    @click.stop="avatarMenuOpen = !avatarMenuOpen">
+                    <span class="avatar">{{ username[0].toUpperCase() }}</span>
+                    <span class="u-name">{{ username }}</span>
+                  </button>
+                  <!-- 头像下拉：系统管理（admin）/ 退出登录 -->
+                  <div v-if="avatarMenuOpen" class="avatar-menu">
+                    <button v-if="isAdmin" class="av-item" @click="goAvatarAdmin()">
+                      <AppIcon name="ai" :size="16" />系统管理
+                    </button>
+                    <button class="av-item av-logout" @click="logout()">
+                      <AppIcon name="wrong" :size="16" />退出登录
+                    </button>
+                  </div>
                 </div>
-                <button v-if="isLoggedIn" class="ghost-btn" @click="logout">退出</button>
               </div>
             </div>
           </header>
@@ -129,25 +132,9 @@ function goMore(to) {
           <router-link to="/vocab"><AppIcon name="vocab" :size="22" />单词</router-link>
           <router-link to="/practice"><AppIcon name="practice" :size="22" />练习</router-link>
           <router-link to="/wrongbook"><AppIcon name="wrong" :size="22" />错题</router-link>
-          <a :class="{ 'router-link-active': moreActive }" @click.prevent="moreOpen = true">
-            <AppIcon name="trend" :size="22" />更多
-          </a>
+          <router-link to="/knowledge"><AppIcon name="spark" :size="22" />知识</router-link>
         </nav>
 
-        <!-- 移动端「更多」底部菜单 -->
-        <div v-if="moreOpen" class="more-mask" @click="moreOpen = false"></div>
-        <div v-if="moreOpen" class="more-sheet">
-          <div class="more-grab"></div>
-          <button v-for="m in moreItems" :key="m.to" class="more-item" @click="goMore(m.to)">
-            <span class="mi-ic"><AppIcon :name="m.icon" :size="20" /></span>
-            <span>{{ m.label }}</span>
-            <AppIcon name="check" :size="14" style="margin-left:auto;opacity:.25" />
-          </button>
-          <button v-if="isLoggedIn" class="more-item" @click="moreOpen = false; logout()">
-            <span class="mi-ic"><AppIcon name="wrong" :size="20" /></span>
-            <span>退出登录（{{ username }}）</span>
-          </button>
-        </div>
       </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
@@ -179,29 +166,9 @@ function goMore(to) {
 .tabbar { display: none; }
 .bar-title { display: none; }
 
-/* 「更多」底部菜单（移动端） */
-.more-mask { display: none; }
-.more-sheet { display: none; }
-
-
-@media (min-width: 769px) and (max-width: 1279px) {
-  .topbar-inner { flex-wrap: wrap; padding-top: 8px; }
-  .right { margin-left: auto; }
-  .nav { order: 3; flex-basis: 100%; overflow-x: auto; padding-bottom: 8px; }
-}
-
 @media (max-width: 768px) {
   .nav { display: none; }
-  .topbar-inner { padding: 0 12px; gap: 8px; min-height: 52px; }
-  .brand { gap: 6px; }
-  .bar-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .title { font-size: 14px; }
-  .exam-chip { gap: 3px; padding: 4px 6px; font-size: 12px; }
-  .exam-chip b { font-size: 15px; }
-  .avatar { width: 26px; height: 26px; }
-  .right { flex-shrink: 0; }
-  .username span.u-name { display: none; }
-  .right .ghost-btn { display: none; }  /* 退出在「更多」菜单里 */
+  .right .ghost-btn { display: none; }  /* 退出在头像菜单里 */
   .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
   .bar-title { display: block; flex: 1; text-align: center; font-size: 15px; font-weight: 600; color: var(--t1); white-space: nowrap; }
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
@@ -217,29 +184,21 @@ function goMore(to) {
   }
   .tabbar a.router-link-active { color: var(--blue); font-weight: 600; }
   .tabbar a.router-link-active svg { transform: translateY(-1px); }
-
-  .more-mask {
-    display: block; position: fixed; inset: 0; z-index: 45;
-    background: rgba(16, 22, 34, 0.4);
-  }
-  .more-sheet {
-    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 46;
-    background: var(--card); border-radius: 16px 16px 0 0;
-    padding: 6px 14px calc(18px + env(safe-area-inset-bottom));
-    box-shadow: 0 -8px 30px rgba(20, 30, 60, 0.18);
-  }
-  .more-grab { width: 36px; height: 4px; border-radius: 2px; background: var(--line); margin: 4px auto 10px; }
-  .more-item {
-    display: flex; align-items: center; gap: 12px; width: 100%;
-    background: transparent; border: none; cursor: pointer;
-    padding: 14px 8px; font-size: 15px; color: var(--t1);
-    border-bottom: 1px solid var(--line-soft); text-align: left;
-  }
-  .more-item:last-child { border-bottom: none; }
-  .more-item:active { background: var(--card-hover); }
-  .mi-ic { width: 36px; height: 36px; border-radius: 9px; background: var(--blue-bg); color: var(--blue);
-    display: flex; align-items: center; justify-content: center; }
 }
 .ghost-btn { border: none; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: #575e72; }
 .ghost-btn:hover { background: rgba(128,128,128,.1); }
+.avatar-wrap { position: relative; }
+.avatar-btn { display: flex; align-items: center; gap: 7px; border: none; background: transparent;
+  cursor: pointer; color: var(--t2); font-size: 13px; padding: 4px; border-radius: 8px; }
+.avatar-btn:hover { background: var(--card-hover); }
+.avatar-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: var(--shadow-pop); min-width: 150px; overflow: hidden;
+}
+.av-item { display: flex; align-items: center; gap: 8px; width: 100%; border: none;
+  background: transparent; cursor: pointer; padding: 11px 14px; font-size: 13.5px;
+  color: var(--t1); text-align: left; }
+.av-item:hover { background: var(--card-hover); }
+.av-logout { color: var(--bad); }
 </style>
