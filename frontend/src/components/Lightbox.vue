@@ -1,10 +1,10 @@
 <script setup>
 // 全局图片/SVG 点击放大：document 级事件委托，无需各页面接入。
-// 规则：点击 .rich 内的 svg 或任意 .chart-img / .lightbox-img 时弹出全屏预览；选项行内不触发（避免干扰选择）。
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+// 规则：点击 .rich 内的 svg 或任意 .chart-img / .lightbox-img 时弹出全屏预览；选项行内不触发（避免干扰作答）。
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const visible = ref(false)
-const contentHtml = ref('')
+const stageRef = ref(null) // 用 ref 引用 stage 元素，不走 querySelector（有 Vue 渲染时序问题）
 
 function onClick(e) {
   if (visible.value) return
@@ -15,7 +15,7 @@ function onClick(e) {
   if (!svg && !img) return
   e.preventDefault()
   e.stopPropagation()
-  // 克隆节点进遮罩层（拷贝 viewBox/尺寸由 CSS 控制）
+
   const node = svg || img
   const clone = node.cloneNode(true)
   if (svg) {
@@ -23,14 +23,13 @@ function onClick(e) {
     clone.setAttribute('width', '100%')
     clone.setAttribute('height', 'auto')
   }
-  contentHtml.value = ''
   visible.value = true
-  // 等 overlay 渲染后插入节点
-  requestAnimationFrame(() => {
-    const holder = document.querySelector('.lightbox-stage')
-    if (holder) {
-      holder.innerHTML = ''
-      holder.appendChild(clone)
+
+  // nextTick 确保 v-if 已渲染出 .lightbox-stage，再插入克隆节点
+  nextTick(() => {
+    if (stageRef.value) {
+      stageRef.value.innerHTML = ''
+      stageRef.value.appendChild(clone)
     }
   })
 }
@@ -41,7 +40,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClick, true))
 
 <template>
   <div v-if="visible" class="lightbox" @click="visible = false">
-    <div class="lightbox-stage"></div>
+    <div ref="stageRef" class="lightbox-stage"></div>
     <div class="lightbox-tip">点击任意处关闭</div>
   </div>
 </template>
