@@ -174,9 +174,12 @@ function goAvatarAdmin() {
   .nav { display: none; }
   .right .ghost-btn { display: none; }  /* 退出在头像菜单里 */
   .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
+  /* 标题在 logo 与右侧簇之间的空档居中（左右留白相等，视觉上才是正中；
+     绝对屏幕居中会因右簇过宽显得偏右） */
   .bar-title {
-    display: block; position: absolute; left: 50%; transform: translateX(-50%);
-    font-size: 15px; font-weight: 600; color: var(--t1); white-space: nowrap;
+    display: block; flex: 1; min-width: 0; text-align: center;
+    font-size: 15px; font-weight: 600; color: var(--t1);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
