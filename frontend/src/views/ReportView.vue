@@ -109,7 +109,8 @@ const duration = computed(() => {
   if (!exam.value?.submitted_at) return '-'
   const ms = new Date(exam.value.submitted_at) - new Date(exam.value.started_at)
   const m = Math.round(ms / 60000)
-  return `${Math.floor(m / 60)} 小时 ${m % 60} 分`
+  const h = Math.floor(m / 60)
+  return h > 0 ? `${h}h${m % 60}m` : `${m}min`
 })
 
 const filtered = computed(() => {
@@ -317,9 +318,10 @@ const counts = computed(() => {
 @media (max-width: 768px) {
   .rp-full { display: none; }
   .rp-short { display: inline; }
-  .report-head { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .report-head > div:last-child { width: 100%; display: flex; gap: 8px; }
-  .report-head h2 { font-size: 18px; }
+  .report-head { flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; }
+  .report-head > div:first-child { flex: 1; min-width: 0; }
+  .report-head > div:last-child { flex: none; }
+  .report-head h2 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rp-time { font-size: 13px; font-weight: 400; }
 }
 .nav-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; gap:8px; }

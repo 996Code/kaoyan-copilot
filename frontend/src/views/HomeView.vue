@@ -7,6 +7,7 @@ import AppIcon from '../components/AppIcon.vue'
 const plan = ref(null)
 const history = ref([])
 const trends = ref(null)
+const calendar = ref(null)
 const dataTab = ref('trend')  // 移动端数据区 Tab：trend / mods / week
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768
 const showTab = (name) => !isMobile || dataTab.value === name
@@ -17,6 +18,7 @@ onMounted(async () => {
     plan.value = await api('/api/plan/today')
     history.value = await api('/api/exams/history')
     trends.value = await api('/api/plan/trends')
+    calendar.value = await api('/api/plan/calendar')
   } catch (e) {
     error.value = e.message
   }
@@ -104,6 +106,26 @@ const sortedModules = computed(() =>
           <span>{{ plan.exams_today }} 场今日已考</span>
           <span class="go">查看 ›</span>
         </div>
+      </div>
+    </div>
+
+    <!-- 冲刺日历 -->
+    <div v-if="calendar && calendar.days" class="cal panel" style="margin-bottom:12px">
+      <div class="panel-h"><b>冲刺日历</b>
+        <span class="muted" style="font-size:11px;margin-left:8px">
+          {{ calendar.days.length }} 天 · {{ calendar.days_left }} 天后考试
+        </span>
+      </div>
+      <div class="cal-grid">
+        <div v-for="d in calendar.days.slice(0, 14)" :key="d.date" class="cal-day"
+          :class="{ today: d.is_today, past: d.is_past, exam: d.is_exam_day, studied: d.studied }"
+          :title="d.date + ' · ' + d.phase + (d.studied ? ' · 已学习' : '')">
+          <span class="cd-num">{{ d.days_to_exam > 0 ? d.days_to_exam : '考' }}</span>
+          <span class="cd-dot" :class="{ on: d.studied, exam: d.is_exam_day }"></span>
+        </div>
+      </div>
+      <div class="cal-legend muted">
+        <span>数字=距考试天数</span><span>●=已学习</span><span class="exam-mark">◆=考试日</span>
       </div>
     </div>
 
@@ -253,6 +275,26 @@ const sortedModules = computed(() =>
 .hs { color: var(--t3); font-size: 12px; }
 .go { margin-left: auto; color: var(--blue); font-size: 12.5px; }
 
+/* 冲刺日历 */
+.mh-streak { font-size: 13px; color: #fff; background: rgba(255,255,255,.2); border-radius: 99px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.cal { border-radius: var(--r-card); }
+.cal-grid { display: flex; gap: 4px; padding: 10px 12px; overflow-x: auto; scrollbar-width: none; }
+.cal-grid::-webkit-scrollbar { display: none; }
+.cal-day {
+  flex: none; width: 38px; height: 44px; border-radius: 8px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px; border: 1px solid var(--line);
+}
+.cal-day.today { outline: 2px solid var(--blue); outline-offset: 1px; }
+.cal-day.past { opacity: .45; }
+.cal-day.exam { background: var(--bad); border-color: var(--bad); }
+.cal-day.studied { background: var(--blue-bg); border-color: var(--blue-line); }
+.cd-num { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cd-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.cd-dot.on { background: var(--blue); }
+.cd-dot.exam { background: #fff; }
+.cal-legend { display: flex; gap: 12px; font-size: 10.5px; padding: 0 12px 8px; }
+.exam-mark { color: var(--bad); }
+
 /* 移动端 hero：仅手机显示 */
 .m-hero { display: none; }
 
@@ -276,9 +318,10 @@ const sortedModules = computed(() =>
 @media (max-width: 768px) {
   .data-tabs { display: flex; gap: 8px; margin: 2px 0 10px; }
   .tr-col { padding: 12px 14px; }
-  .tr-nums { gap: 14px; justify-content: space-between; }
-  .tr-v { font-size: 19px; }
-  .tr-l { font-size: 10px; }
+  .tr-nums { gap: 0; justify-content: space-around; }
+  .tr-v { font-size: 17px; }
+  .tr-l { font-size: 9.5px; }
+  .tr-cell { min-width: 0; }
   .trend-grid { grid-template-columns: 1fr; }
   .tr-col + .tr-col { border-left: none; border-top: 1px solid var(--line-soft); }
   .m-hero {
