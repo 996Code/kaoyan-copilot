@@ -99,7 +99,10 @@ function goAvatarAdmin() {
                 <router-link v-if="isAdmin" to="/admin">系统管理</router-link>
               </nav>
               <div class="right">
-                <div v-if="daysLeft" class="exam-chip">距初试 <b>{{ daysLeft }}</b> 天</div>
+                <div v-if="daysLeft" class="exam-chip" :title="`距初试 ${daysLeft} 天`"
+                  :aria-label="`距初试 ${daysLeft} 天`">
+                  <span class="chip-text">距初试 </span><b>{{ daysLeft }}</b><span class="chip-text"> 天</span>
+                </div>
                 <div v-if="isLoggedIn && username" class="username avatar-wrap">
                   <button class="avatar-btn" :aria-expanded="avatarMenuOpen" aria-label="账号菜单"
                     @click.stop="avatarMenuOpen = !avatarMenuOpen">
@@ -145,7 +148,7 @@ function goAvatarAdmin() {
 .shell.in-exam { background: #fff; }
 .dark .shell, .in-exam { background: inherit; }
 .topbar { position: sticky; top: 0; z-index: 20; background: var(--card); border-bottom: 1px solid var(--line); }
-.topbar-inner { max-width: 1480px; margin: 0 auto; padding: 0 20px; min-height: 52px; display: flex; align-items: center; gap: 12px; }
+.topbar-inner { max-width: 1480px; margin: 0 auto; padding: 0 20px; min-height: 52px; display: flex; align-items: center; gap: 12px; position: relative; }
 .brand, .right { flex-shrink: 0; }
 .nav { min-width: 0; }
 .nav a { white-space: nowrap; }
@@ -168,9 +171,14 @@ function goAvatarAdmin() {
 
 @media (max-width: 768px) {
   .nav { display: none; }
+  .brand .title { display: none; }  /* 移动端只留 logo 徽标 */
+  .chip-text { display: none; }  /* 倒计时只显示数字 */
   .right .ghost-btn { display: none; }  /* 退出在头像菜单里 */
   .right { margin-left: auto; gap: 10px; }  /* nav 隐藏后仍靠右 */
-  .bar-title { display: block; flex: 1; text-align: center; font-size: 15px; font-weight: 600; color: var(--t1); white-space: nowrap; }
+  .bar-title {
+    display: block; position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 15px; font-weight: 600; color: var(--t1); white-space: nowrap;
+  }
   .shell:not(.in-exam) { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   .tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
